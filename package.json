@@ -3,12 +3,13 @@
   "main": "./lib/ensime",
   "version": "0.0.0",
   "description": "A short description of your package",
-  "activationEvents": ["ensime:init"],
+  "activationEvents": ["ensime:init", "ensime:startServer"],
   "repository": "https://github.com/atom/ensime",
   "license": "MIT",
   "engines": {
     "atom": ">0.50.0"
   },
   "dependencies": {
+    "emissary": "1.x"
   }
 }

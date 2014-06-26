@@ -3,9 +3,20 @@ net = require('net')
 exec = require('child_process').exec
 fs = require 'fs'
 swankProtocol = require './swank-protocol'
+{Subscriber} = require 'emissary'
 
 
 ensimeMessageCounter = 1
+
+_portFile = null
+portFile = ->
+  if(_portFile) then _portFile else
+    loadSettings = atom.getLoadSettings()
+    console.log('loadSettings: ' + loadSettings)
+    projectPath = atom.project.getPath()
+    console.log('project path: ' + projectPath)
+    _portFile = projectPath + '/ensime_port'
+    _portFile
 
 swankRpc = (msg) ->
   swankProtocol.buildMessage("(:swank-rpc #{msg} #{ensimeMessageCounter++})")
@@ -29,11 +40,23 @@ openSocketAndSend = (portFileLoc, sendFunction) ->
   console.log("portFileLoc: " + portFileLoc)
   port = fs.readFileSync(portFileLoc)
   console.log("portFile contents: " + port)
-  client = net.connect({port: port}, ->
+  client = net.connect({port: port, allowHalfOpen: true}, ->
     console.log('client connected')
     sendFunction(client)
   )
   client
+
+getServerInfo = (c) ->
+  connectionMsg = swankRpc('(swank:connection-info)')
+  console.log("Connection msg: #{connectionMsg}")
+  c.write(connectionMsg)
+
+initWithDotEnsime = (c) ->
+  dotEnsime = readDotEnsime()
+  initMsg = swankRpc("(swank:init-project #{dotEnsime})")
+  console.log("Init Msg: #{initMsg}")
+  c.write(initMsg)
+
 
 module.exports =
   ensimeView: null
@@ -43,6 +66,7 @@ module.exports =
       atom.workspaceView.statusBar?.appendLeft('<span>Starting Ensime server?</span>')
 
     atom.workspaceView.command "ensime:init", => @initEnsime()
+    atom.workspaceView.command "ensime:startServer", => @startEnsime()
     @ensimeView = new EnsimeView(state.ensimeViewState)
 
   deactivate: ->
@@ -51,27 +75,18 @@ module.exports =
   serialize: ->
     ensimeViewState: @ensimeView.serialize()
 
-  initEnsime: ->
-    loadSettings = atom.getLoadSettings()
-    console.log('loadSettings: ' + loadSettings)
-    projectPath = atom.project.getPath()
-    console.log('project path: ' + projectPath)
-    portFile = projectPath + '/ensime_port'
+  startEnsime: ->
+    startEnsime(portFile())
 
+  initEnsime: ->
     # Start the ensime server
-    startEnsime(portFile)
+    #startEnsime(portFile)
 
     setTimeout(->
       # Open up socket to the server
-      client = openSocketAndSend(portFile, (c) ->
-        connectionMsg = swankRpc('(swank:connection-info)')
-        console.log("Connection msg: #{connectionMsg}")
-        c.write(swankRpc('(swank:connection-info)'))
-
-        dotEnsime = readDotEnsime()
-        console.log(".ensime content: #{dotEnsime}")
-
-        c.write(swankRpc("(swank:init-project #{dotEnsime})"))
+      client = openSocketAndSend(portFile(), (c) ->
+        getServerInfo(c)
+        initWithDotEnsime(c)
       )
 
       client.on('data', (data) ->
@@ -81,6 +96,20 @@ module.exports =
       client.on('end', ->
         console.log("Ensime server disconnected")
       )
+
+      client.on('close', ->
+        console.log("Ensime server close event")
+      )
+
+      client.on('error', ->
+        console.log("Ensime server error event")
+      )
+
+      client.on('timeout', ->
+        console.log("Ensime server timeout event")
+      )
+
+
     , 1000)
 
     editor = atom.workspace.activePaneItem
