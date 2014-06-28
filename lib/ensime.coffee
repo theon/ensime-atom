@@ -5,8 +5,9 @@ fs = require 'fs'
 swankProtocol = require './swank-protocol'
 {Subscriber} = require 'emissary'
 
-
 ensimeMessageCounter = 1
+client = null
+
 
 _portFile = null
 portFile = ->
@@ -22,7 +23,10 @@ swankRpc = (msg) ->
   swankProtocol.buildMessage("(:swank-rpc #{msg} #{ensimeMessageCounter++})")
 
 readDotEnsime = -> # TODO: error handling
-  fs.readFileSync(atom.project.getPath() + '/.ensime')
+  raw = fs.readFileSync(atom.project.getPath() + '/.ensime')
+  rows = raw.toString().split(/\r?\n/);
+  filtered = rows.filter (l) -> l.indexOf(';') != 0
+  filtered.join('\n')
 
 startEnsime = (portFile) ->
   ensimeLocation = '~/dev/projects/ensime-src/dist'
@@ -53,6 +57,7 @@ getServerInfo = (c) ->
 
 initWithDotEnsime = (c) ->
   dotEnsime = readDotEnsime()
+
   initMsg = swankRpc("(swank:init-project #{dotEnsime})")
   console.log("Init Msg: #{initMsg}")
   c.write(initMsg)
@@ -66,7 +71,9 @@ module.exports =
       atom.workspaceView.statusBar?.appendLeft('<span>Starting Ensime server?</span>')
 
     atom.workspaceView.command "ensime:init", => @initEnsime()
-    atom.workspaceView.command "ensime:startServer", => @startEnsime()
+    atom.workspaceView.command "ensime:start-server", => @startEnsime()
+    atom.workspaceView.command "ensime:typecheck-all", => @typecheckAll()
+    atom.workspaceView.command "ensime:init-builder", => @initBuilder()
     @ensimeView = new EnsimeView(state.ensimeViewState)
 
   deactivate: ->
@@ -85,7 +92,7 @@ module.exports =
     setTimeout(->
       # Open up socket to the server
       client = openSocketAndSend(portFile(), (c) ->
-        getServerInfo(c)
+        #getServerInfo(c)
         initWithDotEnsime(c)
       )
 
@@ -117,4 +124,8 @@ module.exports =
 
     atom.workspaceView.statusBar.appendLeft('Starting Ensime server…')
 
-#  typecheckAll: ->
+  typecheckAll: ->
+    client.write(swankRpc("(swank:typecheck-all)"))
+
+  initBuilder: ->
+    client.write(swankRpc("(swank:builder-init)"))
