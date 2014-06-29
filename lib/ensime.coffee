@@ -4,6 +4,7 @@ exec = require('child_process').exec
 fs = require 'fs'
 swankProtocol = require './swank-protocol'
 {Subscriber} = require 'emissary'
+{EnsimeReceiver} = require './ensime-receiver'
 
 ensimeMessageCounter = 1
 client = null
@@ -25,7 +26,7 @@ swankRpc = (msg) ->
 readDotEnsime = -> # TODO: error handling
   raw = fs.readFileSync(atom.project.getPath() + '/.ensime')
   rows = raw.toString().split(/\r?\n/);
-  filtered = rows.filter (l) -> l.indexOf(';') != 0
+  filtered = rows.filter (l) -> l.indexOf(';;') != 0
   filtered.join('\n')
 
 startEnsime = (portFile) ->
@@ -89,35 +90,35 @@ module.exports =
     # Start the ensime server
     #startEnsime(portFile)
 
-    setTimeout(->
-      # Open up socket to the server
-      client = openSocketAndSend(portFile(), (c) ->
-        #getServerInfo(c)
-        initWithDotEnsime(c)
-      )
+    messageHandler = EnsimeReceiver
 
-      client.on('data', (data) ->
-        console.log('received data from Ensime server: ' + data.toString())
-      )
+    # Open up socket to the server
+    client = openSocketAndSend(portFile(), (c) ->
+      #getServerInfo(c)
+      initWithDotEnsime(c)
+    )
 
-      client.on('end', ->
-        console.log("Ensime server disconnected")
-      )
+    client.on('data', (data) ->
+      console.log('received data from Ensime server: ' + data.toString())
+      messageHandler.execute(data)
+    )
 
-      client.on('close', ->
-        console.log("Ensime server close event")
-      )
+    client.on('end', ->
+      console.log("Ensime server disconnected")
+    )
 
-      client.on('error', ->
-        console.log("Ensime server error event")
-      )
+    client.on('close', ->
+      console.log("Ensime server close event")
+    )
 
-      client.on('timeout', ->
-        console.log("Ensime server timeout event")
-      )
+    client.on('error', ->
+      console.log("Ensime server error event")
+    )
 
+    client.on('timeout', ->
+      console.log("Ensime server timeout event")
+    )
 
-    , 1000)
 
     editor = atom.workspace.activePaneItem
     #editor.insertText('Starting Ensime server...')
