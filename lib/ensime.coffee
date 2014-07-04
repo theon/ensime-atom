@@ -4,7 +4,8 @@ exec = require('child_process').exec
 fs = require 'fs'
 swankProtocol = require './swank-protocol'
 {Subscriber} = require 'emissary'
-{EnsimeReceiver} = require './ensime-receiver'
+EnsimeReceiver = require './ensime-receiver'
+
 
 ensimeMessageCounter = 1
 client = null
@@ -68,9 +69,7 @@ module.exports =
   ensimeView: null
 
   activate: (state) ->
-    atom.packages.once 'activated', ->
-      atom.workspaceView.statusBar?.appendLeft('<span>Starting Ensime server?</span>')
-
+    console.log("Ensime#activate called")
     atom.workspaceView.command "ensime:init", => @initEnsime()
     atom.workspaceView.command "ensime:start-server", => @startEnsime()
     atom.workspaceView.command "ensime:typecheck-all", => @typecheckAll()
@@ -87,10 +86,7 @@ module.exports =
     startEnsime(portFile())
 
   initEnsime: ->
-    # Start the ensime server
-    #startEnsime(portFile)
-
-    messageHandler = EnsimeReceiver
+    @receiver = new EnsimeReceiver
 
     # Open up socket to the server
     client = openSocketAndSend(portFile(), (c) ->
@@ -98,9 +94,9 @@ module.exports =
       initWithDotEnsime(c)
     )
 
-    client.on('data', (data) ->
+    client.on('data', (data) =>
       console.log('received data from Ensime server: ' + data.toString())
-      messageHandler.execute(data)
+      @receiver.handle(data)
     )
 
     client.on('end', ->
@@ -118,12 +114,6 @@ module.exports =
     client.on('timeout', ->
       console.log("Ensime server timeout event")
     )
-
-
-    editor = atom.workspace.activePaneItem
-    #editor.insertText('Starting Ensime server...')
-
-    atom.workspaceView.statusBar.appendLeft('Starting Ensime server…')
 
   typecheckAll: ->
     client.write(swankRpc("(swank:typecheck-all)"))
