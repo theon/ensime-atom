@@ -69,7 +69,6 @@ module.exports =
   ensimeView: null
 
   activate: (state) ->
-    console.log("Ensime#activate called")
     atom.workspaceView.command "ensime:init", => @initEnsime()
     atom.workspaceView.command "ensime:start-server", => @startEnsime()
     atom.workspaceView.command "ensime:typecheck-all", => @typecheckAll()
@@ -95,7 +94,6 @@ module.exports =
     )
 
     client.on('data', (data) =>
-      console.log('received data from Ensime server: ' + data.toString())
       @receiver.handle(data)
     )
 

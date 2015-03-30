@@ -1,5 +1,5 @@
 {SwankParser} = require './swank-protocol'
-{car, cdr} = require './lisp'
+{car, cdr, fromLisp} = require './lisp'
 StatusbarView = require './statusbar-view'
 
 if (typeof String::startsWith != 'function')
@@ -16,8 +16,12 @@ class EnsimeReceiver
     @statusbarView.init()
 
     @parser = new SwankParser( (msg) =>
+      console.log("Received from Ensime server: #{msg}")
       head = car(msg)
+      tail = cdr(msg)
       headStr = head.toString()
+      console.log("Head: #{head}")
+      console.log("Tail: #{tail}")
       if(headStr == ':compiler-ready')
         @statusbarView.setText('compiler ready…')
       else if(headStr == ':full-typecheck-finished')
@@ -29,8 +33,40 @@ class EnsimeReceiver
       else if(headStr == ':clear-all-scala-notes')
         @statusbarView.setText('indexer ready')
       else if(headStr.startsWith(':background-message'))
-        @statusbarView.setText('background message')
+        @statusbarView.setText("#{tail}")
+      else if(headStr == ':scala-notes')
+        @handleScalaNotes(tail)
+
     )
+
+
+  sexpToJObject: (msg) ->
+    arr = fromLisp(msg)
+    resultObject = {}
+    currentRightSide = []
+
+    handleElem(elem, i) ->
+      if(elem.startsWith(":"))
+        currentRightSide = []
+        resultObject[elem] = currentRightSide
+
+      else
+        currentRightSide.push(elem)
+
+    @handleElem(elem, i) for elem, i in arr
+    resultObject
+
+
+  ###
+  (
+  (:is-full nil :notes (
+  (:severity error :msg "not found: value TakKey" :beg 123 :end 129 :line 8 :col 16 :file
+  "/Users/viktor/dev/projects/sbt-gulp-task/src/main/scala/se/woodenstake/SbtGulpTask.scala"))
+  ))
+  ###
+  handleScalaNotes: (msg) ->
+    parsed = @sexpToJObject msg
+    console.log("parsed notes: " + parsed)
 
   handle: (msg) =>
     @parser.execute(msg)

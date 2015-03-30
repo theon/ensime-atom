@@ -18,7 +18,9 @@ module.exports =
       console.log("attach in statusbar view")
       statusbar = atom.workspaceView.statusBar
       statusbar.appendLeft this
-      atom.workspaceView.on 'pane:item-removed', @destroy
 
     setText: (text) =>
       @text("Ensime: #{text}").show()
+
+    destroy: ->
+      @detach()
