@@ -1,35 +1,31 @@
 net = require('net')
 exec = require('child_process').exec
 fs = require 'fs'
-swankProtocol = require './swank-protocol'
 {Subscriber} = require 'emissary'
-EnsimeReceiver = require './ensime-receiver'
+SwankClient = require './swank-client'
+StatusbarView = require './statusbar-view'
+{CompositeDisposable} = require 'atom'
+{car, cdr, fromLisp} = require './lisp'
+{sexpToJObject} = require './swank-extras'
 
-
-ensimeMessageCounter = 1
-client = null
-
-
-_portFile = null
 portFile = ->
-  if(_portFile) then _portFile else
     loadSettings = atom.getLoadSettings()
     console.log('loadSettings: ' + loadSettings)
     projectPath = atom.project.getPath()
     console.log('project path: ' + projectPath)
-    _portFile = projectPath + '/.ensime_cache/port'
-    _portFile
+    projectPath + '/.ensime_cache/port'
 
-swankRpc = (msg) ->
-  msg = swankProtocol.buildMessage("(:swank-rpc #{msg} #{ensimeMessageCounter++})")
-  console.log("msg to ensime server: #{msg}")
-  msg
 
 readDotEnsime = -> # TODO: error handling
   raw = fs.readFileSync(atom.project.getPath() + '/.ensime')
   rows = raw.toString().split(/\r?\n/);
   filtered = rows.filter (l) -> l.indexOf(';;') != 0
   filtered.join('\n')
+
+createSwankClient = (portFileLoc, generalHandler) ->
+  console.log("portFileLoc: " + portFileLoc)
+  port = fs.readFileSync(portFileLoc)
+  new SwankClient(port, generalHandler)
 
 startEnsime = (portFile) ->
   ensimeLocation = '~/dev/projects/ensime-src/dist'
@@ -44,77 +40,78 @@ startEnsime = (portFile) ->
       console.log('exec error: ' + error);
   )
 
-openSocketAndSend = (portFileLoc, sendFunction) ->
-  console.log("portFileLoc: " + portFileLoc)
-  port = fs.readFileSync(portFileLoc)
-  console.log("portFile contents: " + port)
-  client = net.connect({port: port, allowHalfOpen: true}, ->
-    console.log('client connected')
-    sendFunction(client)
-  )
-  client
-
-getServerInfo = (c) ->
-  connectionMsg = swankRpc('(swank:connection-info)')
-  console.log("Connection msg: #{connectionMsg}")
-  c.write(connectionMsg)
-
-initWithDotEnsime = (c) ->
-  initMsg = swankRpc("(swank:init-project)")
-  console.log("Init Msg: #{initMsg}")
-  c.write(initMsg)
 
 
 module.exports = Ensime =
+  subscriptions: null
+
   activate: (state) ->
-    atom.workspaceView.command "ensime:init", => @initEnsime()
-    atom.workspaceView.command "ensime:start-server", => @startEnsime()
-    atom.workspaceView.command "ensime:typecheck-all", => @typecheckAll()
-    atom.workspaceView.command "ensime:init-builder", => @initBuilder()
-    atom.workspaceView.command "ensime:go-to-definition", => @goToDefinition()
+    @subscriptions = new CompositeDisposable
+    @statusbarView = new StatusbarView()
+    @statusbarView.init()
+
+    @subscriptions.add atom.commands.add 'atom-workspace',
+      'ascii-art:convert': => @convert()
+
+    # Need to have a started server and port file
+    @subscriptions.add atom.commands.add 'atom-workspace', "ensime:init-project", => @initProject()
+    @subscriptions.add atom.commands.add 'atom-workspace', "ensime:start-server", => @startEnsime()
+    @subscriptions.add atom.commands.add 'atom-workspace', "ensime:typecheck-all", => @typecheckAll()
+    @subscriptions.add atom.commands.add 'atom-workspace', "ensime:init-builder", => @initBuilder()
+    @subscriptions.add atom.commands.add 'atom-workspace', "ensime:go-to-definition", => @goToDefinition()
 
 
   deactivate: ->
+    @subscriptions.dispose()
 
   serialize: ->
+
+  generalHandler: (msg) ->
+    head = car(msg)
+    tail = cdr(msg)
+    headStr = head.toString()
+    console.log("this: " + this)
+
+    if(headStr == ':compiler-ready')
+      @statusbarView.setText('compiler ready…')
+
+    else if(headStr == ':full-typecheck-finished')
+      @statusbarView.setText('Full typecheck finished!')
+
+    else if(headStr == ':indexer-ready')
+      @statusbarView.setText('indexer ready…')
+
+    else if(headStr == ':clear-all-java-notes')
+      @statusbarView.setText('feature todo: clear all java notes')
+
+    else if(headStr == ':clear-all-scala-notes')
+      @statusbarView.setText('feature todo: clear all scala notes')
+
+    else if(headStr.startsWith(':background-message'))
+      @statusbarView.setText("#{tail}")
+
+    else if(headStr == ':scala-notes')
+      @handleScalaNotes(tail)
+
+
+  _client: null
+  client: ->
+    that = this
+    if(@_client) then @_client else
+      @_client = createSwankClient(portFile(), (msg) -> that.generalHandler(msg) )
+      @_client
 
   startEnsime: ->
     startEnsime(portFile())
 
-  initEnsime: ->
-    @receiver = new EnsimeReceiver
-
-    # Open up socket to the server
-    client = openSocketAndSend(portFile(), (c) ->
-      #getServerInfo(c)
-      initWithDotEnsime(c)
-    )
-
-    client.on('data', (data) =>
-      @receiver.handle(data)
-    )
-
-    client.on('end', ->
-      console.log("Ensime server disconnected")
-    )
-
-    client.on('close', ->
-      console.log("Ensime server close event")
-    )
-
-    client.on('error', ->
-      console.log("Ensime server error event")
-    )
-
-    client.on('timeout', ->
-      console.log("Ensime server timeout event")
-    )
+  initProject: ->
+    @client().sendAndThen("(swank:init-project)", (msg) -> )
 
   typecheckAll: ->
-    client.write(swankRpc("(swank:typecheck-all)"))
+    @client().sendAndThen("(swank:typecheck-all)", (msg) ->)
 
   initBuilder: ->
-    client.write(swankRpc("(swank:builder-init)"))
+    #client.write(swankRpc("(swank:builder-init)"))
 
   goToDefinition: ->
     editor = atom.workspace.getActiveTextEditor()
@@ -122,31 +119,18 @@ module.exports = Ensime =
     pos = editor.getCursorBufferPosition()
     offset = textBuffer.characterIndexForPosition(pos)
     file = textBuffer.getPath()
-    client.write(swankRpc("(swank:type-at-point \"#{file}\" #{offset})"))
+    @client().sendAndThen("(swank:type-at-point \"#{file}\" #{offset})", (msg) ->
+      # (:return (:ok (:arrow-type nil :name "Ingredient" :type-id 3 :decl-as class :full-name "se.kostbevakningen.model.record.Ingredient" :type-args nil :members nil :pos (:type offset :file "/Users/viktor/dev/projects/kostbevakningen/src/main/scala/se/kostbevakningen/model/record/Ingredient.scala" :offset 545) :outer-type-id nil)) 3)
+      pos = msg[":ok"]?[":pos"]
+      targetFile = pos[":file"]
+      targetOffset = pos[":offset"]
+      console.log("targetFile: #{targetFile}")
+      atom.workspace.open(targetFile).then (editor) ->
+        targetEditorPos = editor.getBuffer().positionForCharacterIndex(parseInt(targetOffset))
+        editor.setCursorScreenPosition(targetEditorPos)
+    )
 
-    # TODO: skapa en aux-funktion som tar ett meddelande och en function för att hantera svaret och som sparar ned
-    # numret mot funktionen och ropar på den när svaret kommer
-
-    ###
-Received from Ensime server: (:return (:ok (:arrow-type nil :name "RequestVar" :type-id 1 :decl-as class :full-name "net.liftweb.http.RequestVar" :type-args ((:arrow-type nil :name "String" :type-id 2 :decl-as class :full-name "java.lang.String" :type-args nil :members nil :pos nil :outer-type-id nil)) :members nil :pos (:type offset :file "/Users/viktor/dev/projects/kostbevakningen/.ensime_cache/dep-src/source-jars/net/liftweb/http/Vars.scala" :offset 14259) :outer-type-id nil)) 2)
-ensime-receiver.coffee:21 Head: :return
-ensime-receiver.coffee:22 Tail: ((:ok (:arrow-type nil :name "RequestVar" :type-id 1 :decl-as class :full-name "net.liftweb.http.RequestVar" :type-args ((:arrow-type nil :name "String" :type-id 2 :decl-as class :full-name "java.lang.String" :type-args nil :members nil :pos nil :outer-type-id nil)) :members nil :pos (:type offset :file "/Users/viktor/dev/projects/kostbevakningen/.ensime_cache/dep-src/source-jars/net/liftweb/http/Vars.scala" :offset 14259) :outer-type-id nil)) 2)
-
-
-
-       * Doc RPC:
-       *   swank:type-at-point
-       * Summary:
-       *   Lookup type of thing at given position.
-       * Arguments:
-       *   String:A source filename.
-       *   Int or (Int, Int):A character offset (or range) in the file.
-       * Return:
-       *   A TypeInfo
-       * Example call:
-       *   (:swank-rpc (swank:type-at-point "SwankProtocol.scala" 32736) 42)
-       * Example return:
-       *   (:return (:ok (:name "String" :type-id 1188 :full-name
-       *   "java.lang.String" :decl-as class)) 42)
-
-    ###
+  handleScalaNotes: (msg) ->
+    parsed = sexpToJObject msg
+    console.log("parsed notes: " + parsed)
+    parsed

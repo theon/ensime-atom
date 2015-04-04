@@ -3,7 +3,7 @@
   "main": "./lib/ensime",
   "version": "0.0.0",
   "description": "Ensime integration for atom",
-  "activationEvents": ["ensime:init", "ensime:startServer", "ensime:go-to-definition"],
+  "activationEvents": ["ensime:init-project", "ensime:start-server", "ensime:go-to-definition"],
   "repository": "https://github.com/atom/ensime",
   "license": "MIT",
   "engines": {
