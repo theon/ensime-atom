@@ -6,8 +6,6 @@ if (typeof String::startsWith != 'function')
   String::startsWith = (str) ->
     return this.slice(0, str.length) == str
 
-#:full-typecheck-finished
-
 
 module.exports =
 class EnsimeReceiver
@@ -22,39 +20,29 @@ class EnsimeReceiver
       headStr = head.toString()
       console.log("Head: #{head}")
       console.log("Tail: #{tail}")
+
       if(headStr == ':compiler-ready')
         @statusbarView.setText('compiler ready…')
+
       else if(headStr == ':full-typecheck-finished')
-        @statusbarView.setText('full typecheck finished')
+        @statusbarView.setText('Full typecheck finished!')
+
       else if(headStr == ':indexer-ready')
-        @statusbarView.setText('indexer ready')
+        @statusbarView.setText('indexer ready…')
+
       else if(headStr == ':clear-all-java-notes')
-        @statusbarView.setText('clear all java notes')
+        @statusbarView.setText('feature todo: clear all java notes')
+
       else if(headStr == ':clear-all-scala-notes')
-        @statusbarView.setText('indexer ready')
+        @statusbarView.setText('feature todo: clear all scala notes')
+
       else if(headStr.startsWith(':background-message'))
         @statusbarView.setText("#{tail}")
+
       else if(headStr == ':scala-notes')
         @handleScalaNotes(tail)
 
     )
-
-
-  sexpToJObject: (msg) ->
-    arr = fromLisp(msg)
-    resultObject = {}
-    currentRightSide = []
-
-    handleElem(elem, i) ->
-      if(elem.startsWith(":"))
-        currentRightSide = []
-        resultObject[elem] = currentRightSide
-
-      else
-        currentRightSide.push(elem)
-
-    @handleElem(elem, i) for elem, i in arr
-    resultObject
 
 
   ###
@@ -64,9 +52,37 @@ class EnsimeReceiver
   "/Users/viktor/dev/projects/sbt-gulp-task/src/main/scala/se/woodenstake/SbtGulpTask.scala"))
   ))
   ###
+  sexpToJObject: (msg) ->
+    arr = fromLisp(msg) # This arrayifies the lisp cons-list
+    console.log("fromLisp: " + arr)
+
+    parseObject = (sObjArr) ->
+      if sObjArr.length == 0
+        {}
+      else
+        keyValue = sObjArr.splice(0, 2)
+        result = parseObject(sObjArr)
+        value = keyValue[1]
+        parsedValue = if Array.isArray(value) then parseArray(value) else value
+        result[keyValue[0]] = parsedValue
+        result
+
+    parseArray = (sObjArr) ->
+      (parseObject elem for elem in sObjArr)
+
+    # An array with first element being ":label" is an object and an array of arrays is a real array
+    firstElem = arr[0]
+    if typeof firstElem is 'string' && firstElem.startsWith(":")
+      # An object
+      parseObject(arr)
+    else
+      parseArray(arr)
+
+
   handleScalaNotes: (msg) ->
     parsed = @sexpToJObject msg
     console.log("parsed notes: " + parsed)
+    parsed
 
   handle: (msg) =>
     @parser.execute(msg)

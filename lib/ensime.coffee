@@ -1,4 +1,3 @@
-EnsimeView = require './ensime-view'
 net = require('net')
 exec = require('child_process').exec
 fs = require 'fs'
@@ -18,11 +17,13 @@ portFile = ->
     console.log('loadSettings: ' + loadSettings)
     projectPath = atom.project.getPath()
     console.log('project path: ' + projectPath)
-    _portFile = projectPath + '/ensime_port'
+    _portFile = projectPath + '/.ensime_cache/port'
     _portFile
 
 swankRpc = (msg) ->
-  swankProtocol.buildMessage("(:swank-rpc #{msg} #{ensimeMessageCounter++})")
+  msg = swankProtocol.buildMessage("(:swank-rpc #{msg} #{ensimeMessageCounter++})")
+  console.log("msg to ensime server: #{msg}")
+  msg
 
 readDotEnsime = -> # TODO: error handling
   raw = fs.readFileSync(atom.project.getPath() + '/.ensime')
@@ -32,7 +33,8 @@ readDotEnsime = -> # TODO: error handling
 
 startEnsime = (portFile) ->
   ensimeLocation = '~/dev/projects/ensime-src/dist'
-  ensimeServerBin = ensimeLocation + '/2.10/bin/server'
+  #ensimeServerBin = ensimeLocation + '/2.10/bin/server'
+  ensimeServerBin = ensimeLocation + '/2.11/bin/server'
   command = 'cd ' + ensimeLocation + '\n' + ensimeServerBin + ' ' + portFile
   console.log("Running command: " + command)
   child = exec(command, (error, stdout, stderr) ->
@@ -58,28 +60,23 @@ getServerInfo = (c) ->
   c.write(connectionMsg)
 
 initWithDotEnsime = (c) ->
-  dotEnsime = readDotEnsime()
-
-  initMsg = swankRpc("(swank:init-project #{dotEnsime})")
+  initMsg = swankRpc("(swank:init-project)")
   console.log("Init Msg: #{initMsg}")
   c.write(initMsg)
 
 
-module.exports =
-  ensimeView: null
-
+module.exports = Ensime =
   activate: (state) ->
     atom.workspaceView.command "ensime:init", => @initEnsime()
     atom.workspaceView.command "ensime:start-server", => @startEnsime()
     atom.workspaceView.command "ensime:typecheck-all", => @typecheckAll()
     atom.workspaceView.command "ensime:init-builder", => @initBuilder()
-    @ensimeView = new EnsimeView(state.ensimeViewState)
+    atom.workspaceView.command "ensime:go-to-definition", => @goToDefinition()
+
 
   deactivate: ->
-    @ensimeView.destroy()
 
   serialize: ->
-    ensimeViewState: @ensimeView.serialize()
 
   startEnsime: ->
     startEnsime(portFile())
@@ -118,3 +115,38 @@ module.exports =
 
   initBuilder: ->
     client.write(swankRpc("(swank:builder-init)"))
+
+  goToDefinition: ->
+    editor = atom.workspace.getActiveTextEditor()
+    textBuffer = editor.getBuffer()
+    pos = editor.getCursorBufferPosition()
+    offset = textBuffer.characterIndexForPosition(pos)
+    file = textBuffer.getPath()
+    client.write(swankRpc("(swank:type-at-point \"#{file}\" #{offset})"))
+
+    # TODO: skapa en aux-funktion som tar ett meddelande och en function för att hantera svaret och som sparar ned
+    # numret mot funktionen och ropar på den när svaret kommer
+
+    ###
+Received from Ensime server: (:return (:ok (:arrow-type nil :name "RequestVar" :type-id 1 :decl-as class :full-name "net.liftweb.http.RequestVar" :type-args ((:arrow-type nil :name "String" :type-id 2 :decl-as class :full-name "java.lang.String" :type-args nil :members nil :pos nil :outer-type-id nil)) :members nil :pos (:type offset :file "/Users/viktor/dev/projects/kostbevakningen/.ensime_cache/dep-src/source-jars/net/liftweb/http/Vars.scala" :offset 14259) :outer-type-id nil)) 2)
+ensime-receiver.coffee:21 Head: :return
+ensime-receiver.coffee:22 Tail: ((:ok (:arrow-type nil :name "RequestVar" :type-id 1 :decl-as class :full-name "net.liftweb.http.RequestVar" :type-args ((:arrow-type nil :name "String" :type-id 2 :decl-as class :full-name "java.lang.String" :type-args nil :members nil :pos nil :outer-type-id nil)) :members nil :pos (:type offset :file "/Users/viktor/dev/projects/kostbevakningen/.ensime_cache/dep-src/source-jars/net/liftweb/http/Vars.scala" :offset 14259) :outer-type-id nil)) 2)
+
+
+
+       * Doc RPC:
+       *   swank:type-at-point
+       * Summary:
+       *   Lookup type of thing at given position.
+       * Arguments:
+       *   String:A source filename.
+       *   Int or (Int, Int):A character offset (or range) in the file.
+       * Return:
+       *   A TypeInfo
+       * Example call:
+       *   (:swank-rpc (swank:type-at-point "SwankProtocol.scala" 32736) 42)
+       * Example return:
+       *   (:return (:ok (:name "String" :type-id 1188 :full-name
+       *   "java.lang.String" :decl-as class)) 42)
+
+    ###

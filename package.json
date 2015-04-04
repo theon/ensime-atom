@@ -1,9 +1,9 @@
 {
-  "name": "ensime",
+  "name": "Ensime",
   "main": "./lib/ensime",
   "version": "0.0.0",
-  "description": "A short description of your package",
-  "activationEvents": ["ensime:init", "ensime:startServer"],
+  "description": "Ensime integration for atom",
+  "activationEvents": ["ensime:init", "ensime:startServer", "ensime:go-to-definition"],
   "repository": "https://github.com/atom/ensime",
   "license": "MIT",
   "engines": {
