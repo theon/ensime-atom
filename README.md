@@ -3,23 +3,26 @@
 This is a work in progress to try to use Ensime functionality in Atom.io
 
 1. sbt ensime (to generate .ensime file)
-2. cmd-shift-P Ensime: start server (if developing, start manually with .sh instead to see log in stdout (note: working dir))
+2. Start ensime server on the project. For now you need to use Emacs to get your script.
+    start-server.sh is mine (Viktor's) hardcoded for now
+3. ctrl-shift-p "Ensime: init project"
+4. ctrl-shift-p "Ensime: go to definition"
 
-    ~/dev/projects/ensime-src/dist $ 2.11/bin/server ~/dev/projects/kostbevakningen/ensime_port
 
-3. Ensime: init project
-
-
-"Window: reload" to reload plugin from source while developing
+## Dev
+"Window: reload" (ctrl-option-cmd l) to reload plugin from source while developing
 
 ## Google group thread:
 https://groups.google.com/forum/#!searchin/ensime/log/ensime/1dWUQwnFoyk/0O12KPjaIBgJ
 
 
 ## Features TODO:
-* go to definition
-* hover (or something) for type info
-* error reporting
-* view applied implicits
 
-## DONE:
+- [x] jump to definition
+- [ ] key shortcuts
+- [ ] mouse interaction (cmd-click for jump to definition)
+- [ ] errors and warnings
+- [ ] get server "bundled" the same way Emacs does it
+- [ ] hover (or something) for type info
+- [ ] autocompletion
+- [ ] view applied implicits
