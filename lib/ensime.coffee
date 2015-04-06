@@ -24,7 +24,7 @@ readDotEnsime = -> # TODO: error handling
 
 createSwankClient = (portFileLoc, generalHandler) ->
   console.log("portFileLoc: " + portFileLoc)
-  port = fs.readFileSync(portFileLoc)
+  port = fs.readFileSync(portFileLoc).toString()
   new SwankClient(port, generalHandler)
 
 startEnsime = (portFile) ->
@@ -60,6 +60,14 @@ module.exports = Ensime =
     @subscriptions.add atom.commands.add 'atom-workspace', "ensime:init-builder", => @initBuilder()
     @subscriptions.add atom.commands.add 'atom-workspace', "ensime:go-to-definition", => @goToDefinition()
 
+
+    ###
+        editor = atom.workspace.getActiveEditor()
+    editorView = atom.workspaceView.getActiveView()
+    editorView.on 'click.atom-hack',(e)=>
+      console.log editor.getCursorBufferPosition()
+      // Here I can show the tooltip if there's an error near the position
+    ###
 
   deactivate: ->
     @subscriptions.dispose()

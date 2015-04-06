@@ -53,3 +53,22 @@ For now I just steal the script from Emacs log:
 18:25:06.734 [default-akka.actor.default-dispatcher-5] INFO  o.e.s.protocol.swank.SwankProtocol - Writing: (:return (:ok (:name "net.liftweb.util.DefaultConnectionIdentifier$" :local-name "DefaultConnectionIdentifier" :decl-pos (:type offset :file "/Users/viktor/dev/projects/kostbevakningen/.ensime_cache/dep-src/source-jars/net/liftweb/util/ConnectionIdentifier.scala" :offset 1016) :type (:arrow-type nil :name "DefaultConnectionIdentifier$" :type-id 1 :decl-as object :full-name "net.liftweb.util.DefaultConnectionIdentifier$" :type-args nil :members nil :pos (:type empty) :outer-type-id nil) :is-callable nil :owner-type-id 2)) 5)
 18:25:06.784 [default-akka.actor.default-dispatcher-5] INFO  o.e.s.protocol.swank.SwankProtocol - Received msg: (:swank-rpc (swank:symbol-designations "/Users/viktor/dev/projects/kostbevakningen/.ensime_cache/dep-src/source-jars/net/liftweb/util/ConnectionIdentifier.scala" 0 1133 (var val varField valField functionCall operator param class trait object package)) 6)
 18:25:06.877 [default-akka.actor.default-dispatcher-5] INFO  o.e.s.protocol.swank.SwankProtocol - Writing: (:return (:ok (:file "/Users/viktor/dev/projects/kostbevakningen/.ensime_cache/dep-src/source-jars/net/liftweb/util/ConnectionIdentifier.scala" :syms ((package 624 631) (package 620 623) (package 640 644) (class 725 731) (operator 796 797) (operator 785 786) (functionCall 787 795) (functionCall 840 848) (functionCall 831 839) (param 874 879) (class 881 884) (class 887 894) (param 897 902) (trait 924 944) (operator 960 962) (functionCall 951 959) (val 948 950) (functionCall 968 976) (trait 1052 1072) (valField 1081 1089) (functionCall 1098 1101) (object 1092 1097)))) 6)
+
+
+
+
+## ctrl-click and then again from lib to lib:
+
+17:17:44.461 [default-akka.actor.default-dispatcher-6] INFO  o.e.s.protocol.swank.SwankProtocol - Received msg: (:swank-rpc (swank:symbol-at-point "/Users/viktor/dev/projects/kostbevakningen2/src/main/scala/bootstrap/liftweb/Boot.scala" 320) 6)
+17:17:44.464 [default-akka.actor.default-dispatcher-6] INFO  o.e.s.protocol.swank.SwankProtocol - Writing: (:return (:ok (:name "net.liftweb.sitemap.SiteMap$" :local-name "SiteMap" :decl-pos (:type offset :file "/Users/viktor/dev/projects/kostbevakningen2/.ensime_cache/dep-src/source-jars/net/liftweb/sitemap/SiteMap.scala" :offset 3374) :type (:arrow-type nil :name "SiteMap$" :type-id 1 :decl-as object :full-name "net.liftweb.sitemap.SiteMap$" :type-args nil :members nil :pos (:type empty) :outer-type-id nil) :is-callable nil :owner-type-id 2)) 6)
+17:17:51.980 [default-akka.actor.default-dispatcher-6] INFO  o.e.s.protocol.swank.SwankProtocol - Received msg: (:swank-rpc (swank:symbol-at-point "/Users/viktor/dev/projects/kostbevakningen2/.ensime_cache/dep-src/source-jars/net/liftweb/sitemap/SiteMap.scala" 738) 7)
+17:17:51.984 [default-akka.actor.default-dispatcher-6] INFO  o.e.s.protocol.swank.SwankProtocol - Writing: (:return (:ok (:name "scala.xml.NodeSeq$" :local-name "NodeSeq" :decl-pos (:type offset :file "/Users/viktor/dev/projects/kostbevakningen2/.ensime_cache/dep-src/source-jars/scala/xml/NodeSeq.scala" :offset 823) :type (:arrow-type nil :name "NodeSeq$" :type-id 3 :decl-as object :full-name "scala.xml.NodeSeq$" :type-args nil :members nil :pos (:type empty) :outer-type-id nil) :is-callable nil :owner-type-id 4)) 7)
+
+
+With Atom weird:
+7:21:54.596 [default-akka.actor.default-dispatcher-3] INFO  o.e.s.protocol.swank.SwankProtocol - Received msg: (:swank-rpc (swank:init-project) 1)
+17:21:54.600 [default-akka.actor.default-dispatcher-3] INFO  o.e.s.protocol.swank.SwankProtocol - Writing: (:return (:ok t) 1)
+17:21:55.111 [default-akka.actor.default-dispatcher-2] INFO  o.e.s.protocol.swank.SwankProtocol - Writing: (:background-message 105 "Initializing Analyzer. Please wait...")
+17:21:55.112 [default-akka.actor.default-dispatcher-2] INFO  o.e.s.protocol.swank.SwankProtocol - Writing: (:full-typecheck-finished)
+17:22:20.129 [default-akka.actor.default-dispatcher-2] INFO  o.e.s.protocol.swank.SwankProtocol - Received msg: (:swank-rpc (swank:type-at-point "/Users/viktor/dev/projects/kostbevakningen/src/main/scala/bootstrap/liftweb/Boot.scala" 319) 2)
+17:22:20.388 [default-akka.actor.default-dispatcher-2] INFO  o.e.s.protocol.swank.SwankProtocol - Writing: (:return (:ok nil) 2)

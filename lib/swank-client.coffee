@@ -22,9 +22,16 @@ class SwankClient
         # callback from map using message counter
         returned = cdr(msg)
         answer = car(returned)
-        msgCounter = car(cdr(returned))
+        msgCounter = parseInt(car(cdr(returned)))
         console.log("return msg for #{msgCounter}: #{answer}")
-        @callbackMap[parseInt(msgCounter)](sexpToJObject(answer))
+
+        try
+          @callbackMap[msgCounter](sexpToJObject(answer))
+        catch error
+          console.log("error in callback: #{error}")
+        finally
+          delete @callbackMap[msgCounter]
+
       else
         generalMsgHandler(msg) # We let swank leak for now because I don't really know how (:clear-scala-notes) should
         # be translated into json. So unfortunately direct deps from main to car/cdr and such.
