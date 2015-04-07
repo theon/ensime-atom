@@ -39,6 +39,18 @@ class EditorControl
       @clearExprTypeTimeout()
 
 
+
+    # Try something like https://github.com/atom/atom/blob/master/src/text-editor-component.coffee#L365
+    # Maybe first mark with underline and change pointer on hover and when clicking, do the jump
+    @subscriber.subscribe @scroll, 'mousedown', (e) =>
+      {detail, shiftKey, metaKey, ctrlKey, altKey} = e
+      pixelPt = pixelPositionFromMouseEvent(@editor, e)
+      screenPt = @editor.screenPositionForPixelPosition(pixelPt)
+      bufferPt = @editor.bufferPositionForScreenPosition(screenPt)
+      buffer = @editor.getBuffer()
+      if(altKey) then @client.goToTypeAtPoint(buffer, bufferPt)
+
+
   deactivate: ->
     @clearExprTypeTimeout()
     @subscriber.unsubscribe()

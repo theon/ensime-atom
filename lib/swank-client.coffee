@@ -70,3 +70,19 @@ class SwankClient
     swankMsg = buildMessage("(:swank-rpc #{msg} #{@ensimeMessageCounter})")
     @callbackMap[@ensimeMessageCounter++] = callback
     @socket.write(swankMsg)
+
+
+  goToTypeAtPoint: (textBuffer, bufferPosition) =>
+    offset = textBuffer.characterIndexForPosition(bufferPosition)
+    file = textBuffer.getPath()
+    @sendAndThen("(swank:type-at-point \"#{file}\" #{offset})", (msg) ->
+      # (:return (:ok (:arrow-type nil :name "Ingredient" :type-id 3 :decl-as class :full-name "se.kostbevakningen.model.record.Ingredient" :type-args nil :members nil :pos (:type offset :file "/Users/viktor/dev/projects/kostbevakningen/src/main/scala/se/kostbevakningen/model/record/Ingredient.scala" :offset 545) :outer-type-id nil)) 3)
+      pos = msg[":ok"]?[":pos"]
+      targetFile = pos[":file"]
+      targetOffset = pos[":offset"]
+      console.log("targetFile: #{targetFile}")
+      atom.workspace.open(targetFile).then (editor) ->
+        targetEditorPos = editor.getBuffer().positionForCharacterIndex(parseInt(targetOffset))
+        editor.setCursorScreenPosition(targetEditorPos)
+
+      )

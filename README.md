@@ -21,13 +21,15 @@ https://groups.google.com/forum/#!searchin/ensime/log/ensime/1dWUQwnFoyk/0O12KPj
 - [ ] See if we can use code-links for mouse clicks https://atom.io/packages/code-links
 
 
-## Features TODO:
-
+## Features:
 - [x] jump to definition
 - [x] key shortcuts
 - [x] hover (or something) for type info
+- [x] alt-click for jump to definition
 - [ ] get server "bundled" the same way Emacs does it
-- [ ] mouse interaction (cmd-click for jump to definition)
+- [ ] customizable commands
+- [ ] customizable key modifiers on mouse commands. cmd-click, ctrl-click or alt-click for go to definition?
+- [ ] Try using code-links or their approach to make underlined links when hovering with cmd/ctrl
 - [ ] errors and warnings
 - [ ] autocompletion
 - [ ] view applied implicits

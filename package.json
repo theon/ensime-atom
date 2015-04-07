@@ -13,5 +13,13 @@
     "emissary": "1.x",
     "atom-space-pen-views": "^2.0.3",
     "jquery": "^2"
+  },
+  "____comment____providedServices": {
+    "code-links": {
+      "description": "Provides code links for Scala files using Ensime.",
+      "versions": {
+        "0.2.0": "provideLinks"
+      }
+    }
   }
 }
