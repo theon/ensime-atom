@@ -5,8 +5,7 @@
 sexpToJObject = (msg) ->
   that = this
   arr = fromLisp(msg) # This arrayifies the lisp cons-list
-  console.log("fromLisp: " + arr)
-
+  
   parseObject = (sObjArr) ->
     if sObjArr.length == 0
       {}

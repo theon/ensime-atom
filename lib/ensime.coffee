@@ -7,6 +7,7 @@ StatusbarView = require './statusbar-view'
 {CompositeDisposable} = require 'atom'
 {car, cdr, fromLisp} = require './lisp'
 {sexpToJObject} = require './swank-extras'
+EditorControl = require './editor-control'
 
 portFile = ->
     loadSettings = atom.getLoadSettings()
@@ -50,8 +51,6 @@ module.exports = Ensime =
     @statusbarView = new StatusbarView()
     @statusbarView.init()
 
-    @subscriptions.add atom.commands.add 'atom-workspace',
-      'ascii-art:convert': => @convert()
 
     # Need to have a started server and port file
     @subscriptions.add atom.commands.add 'atom-workspace', "ensime:init-project", => @initProject()
@@ -59,6 +58,14 @@ module.exports = Ensime =
     @subscriptions.add atom.commands.add 'atom-workspace', "ensime:typecheck-all", => @typecheckAll()
     @subscriptions.add atom.commands.add 'atom-workspace', "ensime:init-builder", => @initBuilder()
     @subscriptions.add atom.commands.add 'atom-workspace', "ensime:go-to-definition", => @goToDefinition()
+
+
+
+
+    # Register an EditorControl for each editor view
+    @controlSubscription = atom.workspace.observeTextEditors (editor) =>
+      editorView = atom.views.getView(editor)
+      editorView.flowController = new EditorControl(editor, @client())
 
 
     ###
@@ -71,6 +78,7 @@ module.exports = Ensime =
 
   deactivate: ->
     @subscriptions.dispose()
+    @controlSubscription.dispose()
 
   serialize: ->
 

@@ -16,13 +16,18 @@ This is a work in progress to try to use Ensime functionality in Atom.io
 https://groups.google.com/forum/#!searchin/ensime/log/ensime/1dWUQwnFoyk/0O12KPjaIBgJ
 
 
+## Technical TODO:
+- [x] checkout typescript plugin for hover for type info
+- [ ] See if we can use code-links for mouse clicks https://atom.io/packages/code-links
+
+
 ## Features TODO:
 
 - [x] jump to definition
-- [ ] key shortcuts
+- [x] key shortcuts
+- [x] hover (or something) for type info
+- [ ] get server "bundled" the same way Emacs does it
 - [ ] mouse interaction (cmd-click for jump to definition)
 - [ ] errors and warnings
-- [ ] get server "bundled" the same way Emacs does it
-- [ ] hover (or something) for type info
 - [ ] autocompletion
 - [ ] view applied implicits
