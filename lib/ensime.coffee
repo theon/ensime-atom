@@ -8,6 +8,7 @@ StatusbarView = require './statusbar-view'
 {car, cdr, fromLisp} = require './lisp'
 {sexpToJObject} = require './swank-extras'
 EditorControl = require './editor-control'
+{updateEnsimeServer, startEnsimeServer} = require './ensime-startup'
 
 portFile = ->
     loadSettings = atom.getLoadSettings()
@@ -17,17 +18,12 @@ portFile = ->
     projectPath + '/.ensime_cache/port'
 
 
-readDotEnsime = -> # TODO: error handling
-  raw = fs.readFileSync(atom.project.getPath() + '/.ensime')
-  rows = raw.toString().split(/\r?\n/);
-  filtered = rows.filter (l) -> l.indexOf(';;') != 0
-  filtered.join('\n')
-
 createSwankClient = (portFileLoc, generalHandler) ->
   console.log("portFileLoc: " + portFileLoc)
   port = fs.readFileSync(portFileLoc).toString()
   new SwankClient(port, generalHandler)
 
+###
 startEnsime = (portFile) ->
   ensimeLocation = '~/dev/projects/ensime-src/dist'
   #ensimeServerBin = ensimeLocation + '/2.10/bin/server'
@@ -40,11 +36,40 @@ startEnsime = (portFile) ->
     if(error != null)
       console.log('exec error: ' + error);
   )
-
+###
 
 
 module.exports = Ensime =
   subscriptions: null
+
+  config: {
+    ensimeServerVersion: {
+      description: 'Version of Ensime server',
+      type: 'string',
+      default: "0.9.10-SNAPSHOT"
+    },
+    sbtExec: {
+      description: 'Full path to sbt. \'which sbt\'',
+      type: 'string',
+      default: "/usr/local/bin/sbt"
+    },
+    JAVA_HOME: {
+      description: 'path to JAVA_HOME'
+      type: 'string'
+      default: '/Library/Java/JavaVirtualMachines/jdk1.8.0_05.jdk/Contents/Home/'
+    },
+    ensimeServerFlags: {
+      description: 'java flags for ensime server startup'
+      type: 'string',
+      default: ''
+    },
+    devMode: {
+      description: 'Turn on for extra console logging during development',
+      type: 'boolean',
+      default: false
+    }
+  }
+
 
   activate: (state) ->
     @subscriptions = new CompositeDisposable
@@ -53,19 +78,19 @@ module.exports = Ensime =
 
 
     # Need to have a started server and port file
+    @subscriptions.add atom.commands.add 'atom-workspace', "ensime:update-ensime-server", => updateEnsimeServer()
     @subscriptions.add atom.commands.add 'atom-workspace', "ensime:init-project", => @initProject()
-    @subscriptions.add atom.commands.add 'atom-workspace', "ensime:start-server", => @startEnsime()
+
+    @subscriptions.add atom.commands.add 'atom-workspace', "ensime:start-server", =>
+      if not @ensimeServerPid then @ensimeServerPid = startEnsimeServer()
+    @subscriptions.add atom.commands.add 'atom-workspace', "ensime:stop-server", =>
+      @ensimeServerPid?.kill()
+
     @subscriptions.add atom.commands.add 'atom-workspace', "ensime:typecheck-all", => @typecheckAll()
     @subscriptions.add atom.commands.add 'atom-workspace', "ensime:init-builder", => @initBuilder()
     @subscriptions.add atom.commands.add 'atom-workspace', "ensime:go-to-definition", => @goToDefinitionOfCursor()
 
 
-
-
-    # Register an EditorControl for each editor view
-    @controlSubscription = atom.workspace.observeTextEditors (editor) =>
-      editorView = atom.views.getView(editor)
-      editorView.flowController = new EditorControl(editor, @client())
 
 
     ###
@@ -79,6 +104,7 @@ module.exports = Ensime =
   deactivate: ->
     @subscriptions.dispose()
     @controlSubscription.dispose()
+    @ensimeServerPid?.kill()
 
   serialize: ->
 
@@ -122,6 +148,13 @@ module.exports = Ensime =
 
   initProject: ->
     @client().sendAndThen("(swank:init-project)", (msg) -> )
+
+    # Register an EditorControl for each editor view
+    @controlSubscription = atom.workspace.observeTextEditors (editor) =>
+      editorView = atom.views.getView(editor)
+      editorView.flowController = new EditorControl(editor, @client())
+
+
 
   typecheckAll: ->
     @client().sendAndThen("(swank:typecheck-all)", (msg) ->)

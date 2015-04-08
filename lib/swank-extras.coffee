@@ -5,13 +5,15 @@
 sexpToJObject = (msg) ->
   that = this
   arr = fromLisp(msg) # This arrayifies the lisp cons-list
-  
-  parseObject = (sObjArr) ->
-    if sObjArr.length == 0
+
+  parseObject = (obj) ->
+    if typeof obj is 'string'
+      obj
+    else if not obj? || obj.length == 0
       {}
     else
-      keyValue = sObjArr.splice(0, 2)
-      result = parseObject(sObjArr)
+      keyValue = obj.splice(0, 2)
+      result = parseObject(obj)
       value = keyValue[1]
       parsedValue = if Array.isArray(value) then sexpToJObject(value) else value
       result[keyValue[0]] = parsedValue

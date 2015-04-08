@@ -2,24 +2,6 @@
 
 This is a work in progress to try to use Ensime functionality in Atom.io
 
-1. sbt ensime (to generate .ensime file)
-2. Start ensime server on the project. For now you need to use Emacs to get your script.
-    start-server.sh is mine (Viktor's) hardcoded for now
-3. ctrl-shift-p "Ensime: init project"
-4. ctrl-shift-p "Ensime: go to definition"
-
-
-## Dev
-"Window: reload" (ctrl-option-cmd l) to reload plugin from source while developing
-
-## Google group thread:
-https://groups.google.com/forum/#!searchin/ensime/log/ensime/1dWUQwnFoyk/0O12KPjaIBgJ
-
-
-## Technical TODO:
-- [x] checkout typescript plugin for hover for type info
-- [ ] See if we can use code-links for mouse clicks https://atom.io/packages/code-links
-
 
 ## Features:
 - [x] jump to definition
@@ -33,3 +15,30 @@ https://groups.google.com/forum/#!searchin/ensime/log/ensime/1dWUQwnFoyk/0O12KPj
 - [ ] errors and warnings
 - [ ] autocompletion
 - [ ] view applied implicits
+
+## Dev
+"Window: reload" (ctrl-option-cmd l) to reload plugin from source while developing
+
+## Google group thread:
+https://groups.google.com/forum/#!searchin/ensime/log/ensime/1dWUQwnFoyk/0O12KPjaIBgJ
+
+
+## Technical TODO:
+- [x] checkout typescript plugin for hover for type info
+- [ ] put console logging under dev-flag
+- [ ] Isolate swank/lisp - it leaks everywhere
+- [ ] See if we can use code-links for mouse clicks https://atom.io/packages/code-links
+
+
+## Inspiration (steal if you can)
+- https://github.com/lukehoban/atom-ide-flow/
+- code-links
+- https://github.com/atom/atom/blob/master/src/text-editor-component.coffee#L365
+- https://github.com/TypeStrong/atom-typescript/
+- https://github.com/chaika2013/ide-haskell/
+
+## Links
+- Protocol: https://github.com/ensime/ensime-server/blob/master/swank/src/main/scala/org/ensime/server/protocol/swank/SwankProtocol.scala
+- Emacs command ref: https://github.com/ensime/ensime-server/wiki/Emacs-Command-Reference
+- Ensime google group: https://groups.google.com/forum/#!forum/ensime
+- Startup of server from Emacs https://github.com/ensime/ensime-emacs/blob/master/ensime-startup.el

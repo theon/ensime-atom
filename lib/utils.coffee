@@ -21,10 +21,17 @@ screenPositionFromMouseEvent = (editor, event) ->
 getElementsByClass = (elem,klass) ->
   elem.rootElement.querySelectorAll(klass)
 
+devMode = atom.config.get('ensime.devMode')
+
+log = (toLog) ->
+  if devMode
+    console.log(toLog.toString())
+
 
 module.exports = {
   isScalaSource,
   pixelPositionFromMouseEvent,
   screenPositionFromMouseEvent,
-  getElementsByClass
+  getElementsByClass,
+  log
 }
