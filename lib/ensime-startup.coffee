@@ -97,7 +97,11 @@ startEnsimeServer = ->
 
   javaHome = atom.config.get('ensime.JAVA_HOME')
   toolsJar = "#{javaHome}/lib/tools.jar"
-  scalaVersion = scalaVersionOfProjectDotEnsime()
+
+  projectPath = atom.project.getPath()
+  ensimeConfigFile = projectPath + '/.ensime'
+
+  scalaVersion = scalaVersionOfProjectDotEnsime(ensimeConfigFile)
   ensimeServerVersion = atom.config.get('ensime.ensimeServerVersion')
 
   classpathFileName = classpathFile(scalaVersion, ensimeServerVersion)
