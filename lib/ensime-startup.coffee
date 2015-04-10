@@ -64,11 +64,10 @@ updateEnsimeServer = ->
   # createTempDir plugindir + ensime_update_
   dir = tempdir
 
-  fs.exists(dir, (exists) =>
-    if not exists
-      fs.mkdirSync(dir)
-      fs.mkdirSync(dir + '/project')
-  )
+  if not fs.existsSync(dir)
+    fs.mkdirSync(dir)
+    fs.mkdirSync(dir + '/project')
+
 
   ensimeServerVersion = atom.config.get('ensime.ensimeServerVersion')
 
@@ -92,6 +91,9 @@ updateEnsimeServer = ->
 
 
 startEnsimeServer = ->
+  if not fs.existsSync(ensimeCache)
+    fs.mkdirSync(ensimeCache)
+
   javaHome = atom.config.get('ensime.JAVA_HOME')
   toolsJar = "#{javaHome}/lib/tools.jar"
   scalaVersion = scalaVersionOfProjectDotEnsime()

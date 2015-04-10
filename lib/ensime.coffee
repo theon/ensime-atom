@@ -76,7 +76,7 @@ module.exports = Ensime =
     @subscriptions.add atom.commands.add 'atom-workspace', "ensime:update-ensime-server", => updateEnsimeServer()
     @subscriptions.add atom.commands.add 'atom-workspace', "ensime:init-project", => @initProject()
 
-    @subscriptions.add atom.commands.add 'atom-workspace', "ensime:start-server", => maybeStartEnsimeServer()
+    @subscriptions.add atom.commands.add 'atom-workspace', "ensime:start-server", => @maybeStartEnsimeServer()
 
     @subscriptions.add atom.commands.add 'atom-workspace', "ensime:stop-server", =>
       @ensimeServerPid?.kill()
@@ -145,7 +145,7 @@ module.exports = Ensime =
     startEnsime(portFile())
 
   initProject: ->
-    maybeStartEnsimeServer()
+    @maybeStartEnsimeServer() #must busy-check for port-file with rescheduling since need to wait until sever has come that far
     @client().sendAndThen("(swank:init-project)", (msg) -> )
 
     # Register an EditorControl for each editor view

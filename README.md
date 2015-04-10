@@ -1,26 +1,37 @@
 # atom-ensime
 
 This is a work in progress to try to use [Ensime](https://github.com/ensime/) functionality in [Atom](https://atom.io)
+Way early still and will most likely be very buggy. Or maybe not start at all. The bootstrapping of the Ensime server might be an issue. Please let me know if you have any troubles with the few features implemented. I guess most problems will probably be related to bootstrapping of the Ensime server.
 
 ## Prerequisites
 - sbt (used to bootstrap server)
 - .ensime file. generate with sbt gen-ensime https://github.com/ensime/ensime-server/wiki/Quick-Start-Guide#installing-the-ensime-sbt-plugin
 
+## Getting started
+- Open a project with a .ensime in root
+- cmd-shift-P Ensime: Update server. This will use sbt to download all deps and create a classpath file for the server. Make take a while and currently no log output :)
+- cmd-shift-P Ensime: Start server.
+- cmd-shift-P Ensime: Init project. This will create a swank client and connect to the ensime server
+- Then you can use the features marked x below :)
+
+Note: Init project will start the server too, but need to check for portfile before
+
+
 ## Features:
 - [x] jump to definition (alt-click or f4)
 - [x] hover for type info
-- [x] get server "bundled" the same way Emacs does it
-- [x] super basic errors and warnings
+- [x] super basic errors and warnings (Ensime: typecheck file, typecheck buffer, typecheck all)
 - [ ] better errors and warnings with markings in gutter
 - [ ] errors on save or typing (currently only command)
-
 - [ ] customizable key modifiers on mouse commands. cmd-click, ctrl-click or alt-click for go to definition?
 - [ ] Try using code-links or their approach to make underlined links when hovering with cmd/ctrl
 - [ ] autocompletion
 - [ ] view applied implicits
 
 ## Dev
-"Window: reload" (ctrl-option-cmd l) to reload plugin from source while developing
+- checkout from git straight into .atom/packages. Need to have the right name on the folder: "ensime".
+- "Window: reload" (ctrl-option-cmd l) to reload plugin from source while developing
+
 
 ## Google group thread:
 https://groups.google.com/forum/#!searchin/ensime/log/ensime/1dWUQwnFoyk/0O12KPjaIBgJ
@@ -29,6 +40,7 @@ https://groups.google.com/forum/#!searchin/ensime/log/ensime/1dWUQwnFoyk/0O12KPj
 ## Technical TODO:
 - [x] checkout typescript plugin for hover for type info
 - [x] option to start server detached for ease of debugging: https://nodejs.org/api/child_process.html#child_process_options_detached
+- [ ] update server log in a panel in atom
 - [ ] server log in a panel in atom
 - [ ] server will stop logging when atom is reloaded since stdio is piped via node. Pipe to file directly from process
  and tail -f to buffer in atom?
