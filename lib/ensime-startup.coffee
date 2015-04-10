@@ -116,9 +116,12 @@ startEnsimeServer = ->
   log("Starting ensime server with: #{javaCmd} #{args.join(' ')}")
 
 
+
   serverLog = fs.createWriteStream(ensimeServerLogFile)
 
-  pid = spawn(javaCmd, args)
+  pid = spawn(javaCmd, args, {
+   detached: atom.config.get('ensime.runServerDetached')
+  })
   pid.stdout.pipe(serverLog) # TODO: have a screenbuffer tail -f this file.
   pid.stderr.pipe(serverLog)
   pid.stdin.end()

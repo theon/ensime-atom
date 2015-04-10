@@ -94,7 +94,7 @@ class EditorControl
     @client.sendAndThen("(swank:type-at-point \"#{@editor.getPath()}\" #{offset})", (msg) =>
       # (:return (:ok (:arrow-type nil :name "Ingredient" :type-id 3 :decl-as class :full-name "se.kostbevakningen.model.record.Ingredient" :type-args nil :members nil :pos (:type offset :file "/Users/viktor/dev/projects/kostbevakningen/src/main/scala/se/kostbevakningen/model/record/Ingredient.scala" :offset 545) :outer-type-id nil)) 3)
       fullName = msg[":ok"]?[":full-name"]
-      console.log("EditorControl recieved msg from ensime: #{msg}. @exprTypeTooltip = #{@exprTypeTooltip}")
+      #console.log("EditorControl recieved msg from ensime: #{msg}. @exprTypeTooltip = #{@exprTypeTooltip}")
       @exprTypeTooltip?.updateText(fullName)
     )
 

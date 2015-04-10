@@ -1,18 +1,19 @@
 # atom-ensime
 
-This is a work in progress to try to use Ensime functionality in Atom.io
+This is a work in progress to try to use [Ensime](https://github.com/ensime/) functionality in [Atom](https://atom.io)
 
+## Prerequisites
+- sbt (used to bootstrap server)
+- .ensime file. generate with sbt gen-ensime https://github.com/ensime/ensime-server/wiki/Quick-Start-Guide#installing-the-ensime-sbt-plugin
 
 ## Features:
-- [x] jump to definition
-- [x] key shortcuts
-- [x] hover (or something) for type info
-- [x] alt-click for jump to definition
-- [ ] get server "bundled" the same way Emacs does it
-- [ ] customizable commands
+- [x] jump to definition (alt-click or f4)
+- [x] hover for type info
+- [x] get server "bundled" the same way Emacs does it
+- [ ] errors and warnings
+- [ ] server log in a panel in atom
 - [ ] customizable key modifiers on mouse commands. cmd-click, ctrl-click or alt-click for go to definition?
 - [ ] Try using code-links or their approach to make underlined links when hovering with cmd/ctrl
-- [ ] errors and warnings
 - [ ] autocompletion
 - [ ] view applied implicits
 
@@ -25,7 +26,13 @@ https://groups.google.com/forum/#!searchin/ensime/log/ensime/1dWUQwnFoyk/0O12KPj
 
 ## Technical TODO:
 - [x] checkout typescript plugin for hover for type info
-- [ ] put console logging under dev-flag
+- [x] option to start server detached for ease of debugging: https://nodejs.org/api/child_process.html#child_process_options_detached
+- [ ] seems I can have two clients attached to ensime server accidentaly.
+- [ ] setting for typechecking current file: ask, on save, while typing + delay ms setting
+- [ ] only try start server if no port-file
+- [ ] make sure boostrapping of ensime server works.
+- [ ] add a bottom panel with tabs (one for errors/warnings, one for server log maybe)
+- [ ] put console logging under dev-flag or just move to separate log
 - [ ] Isolate swank/lisp - it leaks everywhere
 - [ ] See if we can use code-links for mouse clicks https://atom.io/packages/code-links
 
@@ -38,6 +45,7 @@ https://groups.google.com/forum/#!searchin/ensime/log/ensime/1dWUQwnFoyk/0O12KPj
 - https://github.com/chaika2013/ide-haskell/
 
 ## Links
+- https://github.com/ensime/
 - Protocol: https://github.com/ensime/ensime-server/blob/master/swank/src/main/scala/org/ensime/server/protocol/swank/SwankProtocol.scala
 - Emacs command ref: https://github.com/ensime/ensime-server/wiki/Emacs-Command-Reference
 - Ensime google group: https://groups.google.com/forum/#!forum/ensime

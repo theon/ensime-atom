@@ -12,7 +12,7 @@ class SwankClient
     @callbackMap = {}
 
     @parser = new SwankParser( (msg) =>
-      console.log("Received from Ensime server: #{msg}")
+      #console.log("Received from Ensime server: #{msg}")
       head = car(msg)
       headStr = head.toString()
 
@@ -23,7 +23,7 @@ class SwankClient
         returned = cdr(msg)
         answer = car(returned)
         msgCounter = parseInt(car(cdr(returned)))
-        console.log("return msg for #{msgCounter}: #{answer}")
+        #console.log("return msg for #{msgCounter}: #{answer}")
 
         try
           @callbackMap[msgCounter](sexpToJObject(answer))
@@ -80,7 +80,7 @@ class SwankClient
       pos = msg[":ok"]?[":pos"]
       targetFile = pos[":file"]
       targetOffset = pos[":offset"]
-      console.log("targetFile: #{targetFile}")
+      #console.log("targetFile: #{targetFile}")
       atom.workspace.open(targetFile).then (editor) ->
         targetEditorPos = editor.getBuffer().positionForCharacterIndex(parseInt(targetOffset))
         editor.setCursorScreenPosition(targetEditorPos)

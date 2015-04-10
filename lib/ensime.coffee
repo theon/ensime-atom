@@ -9,6 +9,9 @@ StatusbarView = require './statusbar-view'
 {sexpToJObject} = require './swank-extras'
 EditorControl = require './editor-control'
 {updateEnsimeServer, startEnsimeServer} = require './ensime-startup'
+{MessagePanelView, LineMessageView} = require 'atom-message-panel'
+{log} = require './utils'
+
 
 portFile = ->
     loadSettings = atom.getLoadSettings()
@@ -67,6 +70,11 @@ module.exports = Ensime =
       description: 'Turn on for extra console logging during development',
       type: 'boolean',
       default: false
+    },
+    runServerDetached: {
+      description: "Run the Ensime server as a detached process. Useful while developing"
+      type: 'boolean',
+      default: false
     }
   }
 
@@ -87,19 +95,15 @@ module.exports = Ensime =
       @ensimeServerPid?.kill()
 
     @subscriptions.add atom.commands.add 'atom-workspace', "ensime:typecheck-all", => @typecheckAll()
+    @subscriptions.add atom.commands.add 'atom-workspace', "ensime:typecheck-file", => @typecheckFile()
+    @subscriptions.add atom.commands.add 'atom-workspace', "ensime:typecheck-buffer", => @typecheckBuffer()
+
+
     @subscriptions.add atom.commands.add 'atom-workspace', "ensime:init-builder", => @initBuilder()
     @subscriptions.add atom.commands.add 'atom-workspace', "ensime:go-to-definition", => @goToDefinitionOfCursor()
 
+    @initMessagePanel()
 
-
-
-    ###
-        editor = atom.workspace.getActiveEditor()
-    editorView = atom.workspaceView.getActiveView()
-    editorView.on 'click.atom-hack',(e)=>
-      console.log editor.getCursorBufferPosition()
-      // Here I can show the tooltip if there's an error near the position
-    ###
 
   deactivate: ->
     @subscriptions.dispose()
@@ -127,7 +131,8 @@ module.exports = Ensime =
       @statusbarView.setText('feature todo: clear all java notes')
 
     else if(headStr == ':clear-all-scala-notes')
-      @statusbarView.setText('feature todo: clear all scala notes')
+      log(":clear-all-scala-notes received")
+      @messages.clear()
 
     else if(headStr.startsWith(':background-message'))
       @statusbarView.setText("#{tail}")
@@ -138,9 +143,8 @@ module.exports = Ensime =
 
   _client: null
   client: ->
-    that = this
     if(@_client) then @_client else
-      @_client = createSwankClient(portFile(), (msg) -> that.generalHandler(msg) )
+      @_client = createSwankClient(portFile(), (msg) => @generalHandler(msg) )
       @_client
 
   startEnsime: ->
@@ -156,8 +160,43 @@ module.exports = Ensime =
 
 
 
+
+  initMessagePanel: ->
+    @messages = new MessagePanelView
+        title: 'Ensime'
+
+    @messages.attach()
+
+    @messages.add new LineMessageView
+        line: 23
+        character: 4
+        message: 'You haven\'t had a single drop of coffee since this character'
+
+    @messages.add new LineMessageView
+        line: 18
+        character: 4
+        message: 'You haven\'t had asdf of coffee since this character'
+
+    @messages.add new LineMessageView
+        line: 1
+        character: 4
+        message: 'You haven\'t had a single drop of coffee since this character'
+
   typecheckAll: ->
     @client().sendAndThen("(swank:typecheck-all)", (msg) ->)
+
+  # typechecks currently open file
+  typecheckBuffer: ->
+    b = atom.workspace.getActiveTextEditor()?.getBuffer()
+    swankMsg = "(swank:typecheck-file \"#{b.getPath()}\" #{JSON.stringify(b.getText())})"
+    log("swankMsg: #{swankMsg}")
+    @client().sendAndThen(swankMsg, (result) ->)
+
+  typecheckFile: ->
+    b = atom.workspace.getActiveTextEditor()?.getBuffer()
+    swankMsg = "(swank:typecheck-file \"#{b.getPath()}\")"
+    log("swankMsg: #{swankMsg}")
+    @client().sendAndThen(swankMsg, (result) ->)
 
   initBuilder: ->
     #client.write(swankRpc("(swank:builder-init)"))
@@ -169,20 +208,23 @@ module.exports = Ensime =
     @client().goToTypeAtPoint(textBuffer, pos)
 
   handleScalaNotes: (msg) ->
-    parsed = sexpToJObject msg
-    console.log("parsed notes: " + parsed)
-    parsed
+    array = sexpToJObject msg
+    result = array[0]
+    notes = result[':notes']
+
+    handleNote = (note) =>
+      file = note[':file']
+      # for now only handle currently open file.
+      textBuffer = atom.workspace.getActiveTextEditor()?.getBuffer()
+      if(textBuffer.getPath() == file)
+        begOffset = note[':beg']
+        pos = textBuffer.positionForCharacterIndex(begOffset)
+        @messages.add new LineMessageView
+          line: pos.row
+          character: pos.column
+          message: note[':msg']
+
+    handleNote note for note in notes
 
   provideLinks: ->
     require('./provide-links-processor')
-
-
-
-
-
-
-
-
-
-
-    ## "swank:symbol-designations

@@ -13,7 +13,7 @@ class TooltipView extends View
   # update tooltip text
   updateText: (text) ->
     @text(text)
-    console.log("TooltipView updateText: #{text}")
+    #console.log("TooltipView updateText: #{text}")
     @updatePosition()
 
   # smart position update
