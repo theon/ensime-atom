@@ -5,7 +5,7 @@
   "description": "Ensime integration for atom",
   "activationEvents": ["ensime:init-project", "ensime:start-server", "ensime:go-to-definition",
     "ensime:update-ensime-server"],
-  "repository": "https://github.com/atom/ensime",
+  "repository": "https://github.com/hedefalk/atom-ensime",
   "license": "MIT",
   "engines": {
     "atom": ">0.50.0"
