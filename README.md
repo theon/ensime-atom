@@ -10,8 +10,10 @@ This is a work in progress to try to use [Ensime](https://github.com/ensime/) fu
 - [x] jump to definition (alt-click or f4)
 - [x] hover for type info
 - [x] get server "bundled" the same way Emacs does it
-- [ ] errors and warnings
-- [ ] server log in a panel in atom
+- [x] super basic errors and warnings
+- [ ] better errors and warnings with markings in gutter
+- [ ] errors on save or typing (currently only command)
+
 - [ ] customizable key modifiers on mouse commands. cmd-click, ctrl-click or alt-click for go to definition?
 - [ ] Try using code-links or their approach to make underlined links when hovering with cmd/ctrl
 - [ ] autocompletion
@@ -27,10 +29,13 @@ https://groups.google.com/forum/#!searchin/ensime/log/ensime/1dWUQwnFoyk/0O12KPj
 ## Technical TODO:
 - [x] checkout typescript plugin for hover for type info
 - [x] option to start server detached for ease of debugging: https://nodejs.org/api/child_process.html#child_process_options_detached
+- [ ] server log in a panel in atom
+- [ ] server will stop logging when atom is reloaded since stdio is piped via node. Pipe to file directly from process
+ and tail -f to buffer in atom?
 - [ ] seems I can have two clients attached to ensime server accidentaly.
 - [ ] setting for typechecking current file: ask, on save, while typing + delay ms setting
 - [ ] only try start server if no port-file
-- [ ] make sure boostrapping of ensime server works.
+- [ ] getPath is deprecated: https://github.com/atom/atom/blob/master/src/project.coffee#L471 Maybe need to ask about where .ensime is like Emacs.
 - [ ] add a bottom panel with tabs (one for errors/warnings, one for server log maybe)
 - [ ] put console logging under dev-flag or just move to separate log
 - [ ] Isolate swank/lisp - it leaks everywhere

@@ -26,20 +26,7 @@ createSwankClient = (portFileLoc, generalHandler) ->
   port = fs.readFileSync(portFileLoc).toString()
   new SwankClient(port, generalHandler)
 
-###
-startEnsime = (portFile) ->
-  ensimeLocation = '~/dev/projects/ensime-src/dist'
-  #ensimeServerBin = ensimeLocation + '/2.10/bin/server'
-  ensimeServerBin = ensimeLocation + '/2.11/bin/server'
-  command = 'cd ' + ensimeLocation + '\n' + ensimeServerBin + ' ' + portFile
-  console.log("Running command: " + command)
-  child = exec(command, (error, stdout, stderr) ->
-    console.log('stdout: ' + stdout);
-    console.log('stderr: ' + stderr);
-    if(error != null)
-      console.log('exec error: ' + error);
-  )
-###
+
 
 
 module.exports = Ensime =
@@ -57,7 +44,7 @@ module.exports = Ensime =
       default: "/usr/local/bin/sbt"
     },
     JAVA_HOME: {
-      description: 'path to JAVA_HOME'
+      description: 'path to JAVA_HOME',
       type: 'string'
       default: '/Library/Java/JavaVirtualMachines/jdk1.8.0_05.jdk/Contents/Home/'
     },
@@ -72,7 +59,7 @@ module.exports = Ensime =
       default: false
     },
     runServerDetached: {
-      description: "Run the Ensime server as a detached process. Useful while developing"
+      description: "Run the Ensime server as a detached process. Useful while developing",
       type: 'boolean',
       default: false
     }
@@ -89,8 +76,8 @@ module.exports = Ensime =
     @subscriptions.add atom.commands.add 'atom-workspace', "ensime:update-ensime-server", => updateEnsimeServer()
     @subscriptions.add atom.commands.add 'atom-workspace', "ensime:init-project", => @initProject()
 
-    @subscriptions.add atom.commands.add 'atom-workspace', "ensime:start-server", =>
-      if not @ensimeServerPid then @ensimeServerPid = startEnsimeServer()
+    @subscriptions.add atom.commands.add 'atom-workspace', "ensime:start-server", => maybeStartEnsimeServer()
+
     @subscriptions.add atom.commands.add 'atom-workspace', "ensime:stop-server", =>
       @ensimeServerPid?.kill()
 
@@ -112,6 +99,13 @@ module.exports = Ensime =
 
   serialize: ->
 
+  maybeStartEnsimeServer: ->
+    if not @ensimeServerPid
+      @ensimeServerPid = startEnsimeServer()
+      @ensimeServerPid.on 'exit', (code) ->
+        @ensimeServerPid = null
+
+
   generalHandler: (msg) ->
     head = car(msg)
     tail = cdr(msg)
@@ -125,7 +119,7 @@ module.exports = Ensime =
       @statusbarView.setText('Full typecheck finished!')
 
     else if(headStr == ':indexer-ready')
-      @statusbarView.setText('indexer ready…')
+      @statusbarView.setText('indexer ready')
 
     else if(headStr == ':clear-all-java-notes')
       @statusbarView.setText('feature todo: clear all java notes')
@@ -151,6 +145,7 @@ module.exports = Ensime =
     startEnsime(portFile())
 
   initProject: ->
+    maybeStartEnsimeServer()
     @client().sendAndThen("(swank:init-project)", (msg) -> )
 
     # Register an EditorControl for each editor view
@@ -167,20 +162,6 @@ module.exports = Ensime =
 
     @messages.attach()
 
-    @messages.add new LineMessageView
-        line: 23
-        character: 4
-        message: 'You haven\'t had a single drop of coffee since this character'
-
-    @messages.add new LineMessageView
-        line: 18
-        character: 4
-        message: 'You haven\'t had asdf of coffee since this character'
-
-    @messages.add new LineMessageView
-        line: 1
-        character: 4
-        message: 'You haven\'t had a single drop of coffee since this character'
 
   typecheckAll: ->
     @client().sendAndThen("(swank:typecheck-all)", (msg) ->)
@@ -212,19 +193,20 @@ module.exports = Ensime =
     result = array[0]
     notes = result[':notes']
 
-    handleNote = (note) =>
-      file = note[':file']
-      # for now only handle currently open file.
-      textBuffer = atom.workspace.getActiveTextEditor()?.getBuffer()
-      if(textBuffer.getPath() == file)
-        begOffset = note[':beg']
-        pos = textBuffer.positionForCharacterIndex(begOffset)
-        @messages.add new LineMessageView
-          line: pos.row
-          character: pos.column
-          message: note[':msg']
 
-    handleNote note for note in notes
+    addNote = (note) =>
+      file = note[':file']
+      @messages.add new LineMessageView
+          file: file
+          line: note[':line']
+          character: note[':col']
+          message: note[':msg']
+          className: switch note[':severity']
+            when "error" then "highlight-error"
+            when "warning" then "highlight-warning"
+            else ""
+    @messages.attach()
+    addNote note for note in notes
 
   provideLinks: ->
     require('./provide-links-processor')

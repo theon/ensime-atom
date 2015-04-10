@@ -1,4 +1,4 @@
-{View} = require 'atom'
+{View} = require 'atom-space-pen-views'
 
 module.exports =
   class StatusbarView extends View
@@ -10,14 +10,13 @@ module.exports =
     serialize: ->
 
     init: ->
-      console.log("StatusbarView#init called")
-      #atom.packages.once('activated', @attach)
       @attach()
 
     attach: =>
-      console.log("attach in statusbar view")
-      statusbar = atom.workspaceView.statusBar
-      statusbar.appendLeft this
+      #statusbar = atom.workspaceView.statusBar # This is deprecated. Depend on status-bar package for injection
+      #"In the future, this problem will be solved by an inter-package communication API available on atom.services. For now, you can get a reference to the status-bar element via document.querySelector('status-bar')."
+      statusbar = document.querySelector('status-bar')
+      statusbar.addLeftTile {item: this}
 
     setText: (text) =>
       @text("Ensime: #{text}").show()
