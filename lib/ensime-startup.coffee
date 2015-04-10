@@ -42,52 +42,53 @@ tempdir =  packageDir + "/ensime_update_"
 classpathFile = (scalaVersion, ensimeServerVersion) ->
   atom.packages.resolvePackagePath('Ensime') + "/classpath_#{scalaVersion}_#{ensimeServerVersion}"
 
-ensimeConfigFile = atom.project.getPath() + '/.ensime'
+
 ensimeCache = atom.project.getPath() + '/.ensime_cache'
 ensimeServerLogFile = ensimeCache + '/server.log'
 
-readDotEnsime = -> # TODO: error handling
-  raw = fs.readFileSync(ensimeConfigFile) # TODO: ask as Emacs?
+readDotEnsime = (path)-> # TODO: error handling
+  raw = fs.readFileSync(path) # TODO: ask as Emacs?
   rows = raw.toString().split(/\r?\n/);
   filtered = rows.filter (l) -> l.indexOf(';;') != 0
   filtered.join('\n')
 
-
-scalaVersionOfProjectDotEnsime = ->
+scalaVersionOfProjectDotEnsime = (path) ->
   # scala version from .ensime config file of project
-  dotEnsime = readDotEnsime()
+  dotEnsime = readDotEnsime(path)
   dotEnsimeLisp = lisp.readFromString(dotEnsime)
   dotEnsimeJs = sexpToJObject(dotEnsimeLisp)
   dotEnsimeJs[':scala-version']
 
 updateEnsimeServer = ->
-  # createTempDir plugindir + ensime_update_
-  dir = tempdir
+  projectPath = atom.project.getPath()
+  ensimeConfigFile = projectPath + '/.ensime'
 
-  if not fs.existsSync(dir)
-    fs.mkdirSync(dir)
-    fs.mkdirSync(dir + '/project')
+  if not (projectPath and fs.existsSync(ensimeConfigFile))
+    atom.confirm
+      message: 'No .ensime found'
+      detailedMessage: "You need to have a project open with a .ensime in root."
+      buttons:
+        Ok: ->
+  else
+    if not fs.existsSync(tempdir)
+      fs.mkdirSync(tempdir)
+      fs.mkdirSync(tempdir + '/project')
 
+    scalaVersion = scalaVersionOfProjectDotEnsime(ensimeConfigFile)
 
-  ensimeServerVersion = atom.config.get('ensime.ensimeServerVersion')
+    ensimeServerVersion = atom.config.get('ensime.ensimeServerVersion')
 
+    # write out a build.sbt in this dir
+    fs.writeFileSync(tempdir + '/build.sbt', createSbtStartScript(scalaVersion, ensimeServerVersion,
+      classpathFile(scalaVersion, ensimeServerVersion)))
 
-  scalaVersion = scalaVersionOfProjectDotEnsime()
+    fs.writeFileSync(tempdir + '/project/build.properties', 'sbt.version=0.13.8\n')
 
-  # write out a build.sbt in this dir
-  fs.writeFileSync(tempdir + '/build.sbt', createSbtStartScript(scalaVersion, ensimeServerVersion,
-    classpathFile(scalaVersion, ensimeServerVersion)))
-
-
-  fs.writeFileSync(tempdir + '/project/build.properties', 'sbt.version=0.13.8\n')
-
-  # if file exist classpathFile delete
-
-  # run sbt "saveClasspath" "clean"
-  pid = spawn("#{atom.config.get('ensime.sbtExec')}", ['saveClasspath', 'clean'], {cwd: tempdir})
-  pid.stdout.on 'data', (chunk) -> log(chunk.toString('utf8'))
-  pid.stderr.on 'data', (chunk) -> log('ensime startup exec error: ' + chunk.toString('utf8'))
-  pid.stdin.end()
+    # run sbt "saveClasspath" "clean"
+    pid = spawn("#{atom.config.get('ensime.sbtExec')}", ['saveClasspath', 'clean'], {cwd: tempdir})
+    pid.stdout.on 'data', (chunk) -> log(chunk.toString('utf8'))
+    pid.stderr.on 'data', (chunk) -> log('ensime startup exec error: ' + chunk.toString('utf8'))
+    pid.stdin.end()
 
 
 startEnsimeServer = ->
