@@ -43,8 +43,8 @@ classpathFile = (scalaVersion, ensimeServerVersion) ->
   atom.packages.resolvePackagePath('Ensime') + "/classpath_#{scalaVersion}_#{ensimeServerVersion}"
 
 
-ensimeCache = atom.project.getPath() + '/.ensime_cache'
-ensimeServerLogFile = ensimeCache + '/server.log'
+ensimeCache = -> atom.project.getPath() + '/.ensime_cache'
+ensimeServerLogFile = -> ensimeCache() + '/server.log'
 
 readDotEnsime = (path)-> # TODO: error handling
   raw = fs.readFileSync(path) # TODO: ask as Emacs?
@@ -92,8 +92,8 @@ updateEnsimeServer = ->
 
 
 startEnsimeServer = ->
-  if not fs.existsSync(ensimeCache)
-    fs.mkdirSync(ensimeCache)
+  if not fs.existsSync(ensimeCache())
+    fs.mkdirSync(ensimeCache())
 
   javaHome = atom.config.get('ensime.JAVA_HOME')
   toolsJar = "#{javaHome}/lib/tools.jar"
@@ -124,7 +124,7 @@ startEnsimeServer = ->
 
 
 
-  serverLog = fs.createWriteStream(ensimeServerLogFile)
+  serverLog = fs.createWriteStream(ensimeServerLogFile())
 
   pid = spawn(javaCmd, args, {
    detached: atom.config.get('ensime.runServerDetached')

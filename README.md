@@ -9,6 +9,7 @@ Way early still and will most likely be very buggy. Or maybe not start at all. T
 
 ## Getting started
 - Open a project with a .ensime in root
+- Make sure to put path of sbt in settings. Due to this bug: https://github.com/atom/settings-view/issues/356, you need to run some of this package's command first before to have the settings load.
 - cmd-shift-P Ensime: Update server. This will use sbt to download all deps and create a classpath file for the server. Make take a while and currently no log output :)
 - cmd-shift-P Ensime: Start server.
 - cmd-shift-P Ensime: Init project. This will create a swank client and connect to the ensime server
@@ -30,6 +31,7 @@ Note: Init project will start the server too, but need to check for portfile bef
 
 ## Dev
 - checkout from git straight into .atom/packages. Need to have the right name on the folder: "ensime".
+- run apm install
 - "Window: reload" (ctrl-option-cmd l) to reload plugin from source while developing
 
 

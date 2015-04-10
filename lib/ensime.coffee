@@ -39,17 +39,17 @@ module.exports = Ensime =
       default: "0.9.10-SNAPSHOT"
     },
     sbtExec: {
-      description: 'Full path to sbt. \'which sbt\'',
+      description: "Full path to sbt. 'which sbt'",
       type: 'string',
       default: "/usr/local/bin/sbt"
     },
     JAVA_HOME: {
       description: 'path to JAVA_HOME',
-      type: 'string'
+      type: 'string',
       default: '/Library/Java/JavaVirtualMachines/jdk1.8.0_05.jdk/Contents/Home/'
     },
     ensimeServerFlags: {
-      description: 'java flags for ensime server startup'
+      description: 'java flags for ensime server startup',
       type: 'string',
       default: ''
     },
@@ -68,8 +68,7 @@ module.exports = Ensime =
 
   activate: (state) ->
     @subscriptions = new CompositeDisposable
-    @statusbarView = new StatusbarView()
-    @statusbarView.init()
+
 
 
     # Need to have a started server and port file
@@ -89,7 +88,7 @@ module.exports = Ensime =
     @subscriptions.add atom.commands.add 'atom-workspace', "ensime:init-builder", => @initBuilder()
     @subscriptions.add atom.commands.add 'atom-workspace', "ensime:go-to-definition", => @goToDefinitionOfCursor()
 
-    @initMessagePanel()
+
 
 
   deactivate: ->
@@ -138,6 +137,12 @@ module.exports = Ensime =
   _client: null
   client: ->
     if(@_client) then @_client else
+      # This was moved from activate due to https://github.com/atom/settings-view/issues/356
+      # I removed activationEvents but then activate is called on load which makes a lot of stuff left uninited
+      @statusbarView = new StatusbarView()
+      @statusbarView.init()
+      @initMessagePanel()
+
       @_client = createSwankClient(portFile(), (msg) => @generalHandler(msg) )
       @_client
 
