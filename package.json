@@ -1,10 +1,14 @@
 {
   "name": "Ensime",
   "main": "./lib/ensime",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "Ensime integration for atom",
-  "activationEvents": ["ensime:init-project", "ensime:start-server", "ensime:go-to-definition",
-    "ensime:update-ensime-server"],
+  "activationEvents": [
+    "ensime:init-project",
+    "ensime:start-server",
+    "ensime:go-to-definition",
+    "ensime:update-ensime-server"
+  ],
   "repository": "https://github.com/hedefalk/atom-ensime",
   "license": "MIT",
   "engines": {
