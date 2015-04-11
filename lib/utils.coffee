@@ -21,7 +21,7 @@ screenPositionFromMouseEvent = (editor, event) ->
 getElementsByClass = (elem,klass) ->
   elem.rootElement.querySelectorAll(klass)
 
-devMode = atom.config.get('ensime.devMode')
+devMode = atom.config.get('Ensime.devMode')
 
 log = (toLog) ->
   if devMode

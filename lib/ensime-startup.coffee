@@ -76,7 +76,7 @@ updateEnsimeServer = ->
 
     scalaVersion = scalaVersionOfProjectDotEnsime(ensimeConfigFile)
 
-    ensimeServerVersion = atom.config.get('ensime.ensimeServerVersion')
+    ensimeServerVersion = atom.config.get('Ensime.ensimeServerVersion')
 
     # write out a build.sbt in this dir
     fs.writeFileSync(tempdir + '/build.sbt', createSbtStartScript(scalaVersion, ensimeServerVersion,
@@ -84,11 +84,11 @@ updateEnsimeServer = ->
 
     fs.writeFileSync(tempdir + '/project/build.properties', 'sbt.version=0.13.8\n')
 
-    cmd = atom.config.get('ensime.sbtExec')
+    cmd = atom.config.get('Ensime.sbtExec')
     console.log("sbt: " + cmd)
 
     # run sbt "saveClasspath" "clean"
-    pid = spawn("#{atom.config.get('ensime.sbtExec')}", ['saveClasspath', 'clean'], {cwd: tempdir})
+    pid = spawn("#{atom.config.get('Ensime.sbtExec')}", ['saveClasspath', 'clean'], {cwd: tempdir})
     pid.stdout.on 'data', (chunk) -> log(chunk.toString('utf8'))
     pid.stderr.on 'data', (chunk) -> log('ensime startup exec error: ' + chunk.toString('utf8'))
     pid.stdin.end()
@@ -98,14 +98,14 @@ startEnsimeServer = ->
   if not fs.existsSync(ensimeCache())
     fs.mkdirSync(ensimeCache())
 
-  javaHome = atom.config.get('ensime.JAVA_HOME')
+  javaHome = atom.config.get('Ensime.JAVA_HOME')
   toolsJar = "#{javaHome}/lib/tools.jar"
 
   projectPath = atom.project.getPath()
   ensimeConfigFile = projectPath + '/.ensime'
 
   scalaVersion = scalaVersionOfProjectDotEnsime(ensimeConfigFile)
-  ensimeServerVersion = atom.config.get('ensime.ensimeServerVersion')
+  ensimeServerVersion = atom.config.get('Ensime.ensimeServerVersion')
 
   classpathFileName = classpathFile(scalaVersion, ensimeServerVersion)
   #if(not fs.existsSync(path))
@@ -115,7 +115,7 @@ startEnsimeServer = ->
   classpath = toolsJar + ':' + fs.readFileSync(classpathFileName, {encoding: 'utf8'})
 
   javaCmd = "#{javaHome}bin/java"
-  ensimeServerFlags = "#{atom.config.get('ensime.ensimeServerFlags')}"
+  ensimeServerFlags = "#{atom.config.get('Ensime.ensimeServerFlags')}"
   args = ["-classpath", "#{classpath}", "-Densime.config=#{ensimeConfigFile}"]
   if ensimeServerFlags.length > 0
      args.push ensimeServerFlags  ## Weird, but extra " " broke everyting
@@ -130,7 +130,7 @@ startEnsimeServer = ->
   serverLog = fs.createWriteStream(ensimeServerLogFile())
 
   pid = spawn(javaCmd, args, {
-   detached: atom.config.get('ensime.runServerDetached')
+   detached: atom.config.get('Ensime.runServerDetached')
   })
   pid.stdout.pipe(serverLog) # TODO: have a screenbuffer tail -f this file.
   pid.stderr.pipe(serverLog)

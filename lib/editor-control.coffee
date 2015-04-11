@@ -27,7 +27,7 @@ class EditorControl
       # TODO if uri was changed, then we have to remove all current markers
       workspaceElement = atom.views.getView(atom.workspace)
       # TODO: typecheck file on save
-      #if atom.config.get('ensime.checkOnFileSave')
+      #if atom.config.get('Ensime.checkOnFileSave')
       #  atom.commands.dispatch workspaceElement, 'ensime:typecheck-file'
 
     @subscriber.subscribe @scroll, 'mousemove', (e) =>
