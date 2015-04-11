@@ -84,6 +84,9 @@ updateEnsimeServer = ->
 
     fs.writeFileSync(tempdir + '/project/build.properties', 'sbt.version=0.13.8\n')
 
+    cmd = atom.config.get('ensime.sbtExec')
+    console.log("sbt: " + cmd)
+
     # run sbt "saveClasspath" "clean"
     pid = spawn("#{atom.config.get('ensime.sbtExec')}", ['saveClasspath', 'clean'], {cwd: tempdir})
     pid.stdout.on 'data', (chunk) -> log(chunk.toString('utf8'))
