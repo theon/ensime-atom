@@ -3,7 +3,7 @@ fs = require('fs')
 {sexpToJObject} = require('./swank-extras')
 {exec, spawn} = require('child_process')
 lisp = require('./lisp')
-{log} = require('./utils')
+{log, modalMsg} = require('./utils')
 EnsimeServerUpdateLogView = require('./views/ensime-server-update-log-view')
 createSbtStartScript = (scalaVersion, ensimeServerVersion, classpathFile) ->
   """
@@ -64,11 +64,7 @@ updateEnsimeServer = ->
   ensimeConfigFile = projectPath + '/.ensime'
 
   if not (projectPath and fs.existsSync(ensimeConfigFile))
-    atom.confirm
-      message: 'No .ensime found'
-      detailedMessage: "You need to have a project open with a .ensime in root."
-      buttons:
-        Ok: ->
+    modalMsg('No .ensime found', "You need to have a project open with a .ensime in root.")
   else
     #TODO: cleanup!
     @serverUpdateLog = new EnsimeServerUpdateLogView()

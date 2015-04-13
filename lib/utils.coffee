@@ -27,11 +27,18 @@ log = (toLog) ->
   if devMode
     console.log(toLog.toString())
 
+modalMsg = (title, msg) ->
+  atom.confirm
+    message: title
+    detailedMessage: msg
+    buttons:
+      Ok: ->
 
 module.exports = {
   isScalaSource,
   pixelPositionFromMouseEvent,
   screenPositionFromMouseEvent,
   getElementsByClass,
-  log
+  log,
+  modalMsg
 }

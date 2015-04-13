@@ -47,8 +47,10 @@ https://groups.google.com/forum/#!searchin/ensime/log/ensime/1dWUQwnFoyk/0O12KPj
 - [x] checkout typescript plugin for hover for type info
 - [x] option to start server detached for ease of debugging: https://nodejs.org/api/child_process.html#child_process_options_detached
 - [x] update server log in a panel in atom (no copy paste though and terminal escape stuff)
-- [ ] Use port file to check for running server
-- [ ] server log in a panel in atom
+- [x] Use port file to check for running server
+- [x] Remove "start-server" and let init do it all
+- [ ] EditorControl leaks and keeps swank client on stop. Fix some cleanup!
+- [ ] Make "start ensime" to start server(maybe) and client and "stop ensime" kill both
 - [ ] re-insert activation events when this hits https://github.com/atom/settings-view/pull/371
 - [ ] server will stop logging when atom is reloaded since stdio is piped via node. Pipe to file directly from process
  and tail -f to buffer in atom?

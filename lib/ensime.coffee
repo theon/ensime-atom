@@ -10,14 +10,14 @@ StatusbarView = require './statusbar-view'
 EditorControl = require './editor-control'
 {updateEnsimeServer, startEnsimeServer} = require './ensime-startup'
 {MessagePanelView, LineMessageView} = require 'atom-message-panel'
-{log} = require './utils'
+{log, modalMsg} = require './utils'
 
 
 portFile = ->
     loadSettings = atom.getLoadSettings()
-    console.log('loadSettings: ' + loadSettings)
+    log('loadSettings: ' + loadSettings)
     projectPath = atom.project.getPath()
-    console.log('project path: ' + projectPath)
+    log('project path: ' + projectPath)
     projectPath + '/.ensime_cache/port'
 
 
@@ -63,31 +63,34 @@ module.exports = Ensime =
       type: 'boolean',
       default: false
     }
+    typecheckWhen: {
+      description: "When to typecheck",
+      type: 'string',
+      default: 'typing',
+      enum: ['command', 'save', 'typing']
+    }
+    typecheckTypingDelay: {
+      description: "Delay for typechecking while typing, in milliseconds. Too low might cause performance issues."
+      type: 'integer'
+      default: '500'
+    }
   }
 
 
   activate: (state) ->
     @subscriptions = new CompositeDisposable
 
-
-
     # Need to have a started server and port file
     @subscriptions.add atom.commands.add 'atom-workspace', "ensime:update-ensime-server", => updateEnsimeServer()
     @subscriptions.add atom.commands.add 'atom-workspace', "ensime:init-project", => @initProject()
 
-    @subscriptions.add atom.commands.add 'atom-workspace', "ensime:start-server", => @maybeStartEnsimeServer()
-
-    @subscriptions.add atom.commands.add 'atom-workspace', "ensime:stop-server", =>
-      @ensimeServerPid?.kill()
-      @ensimeServerPid = null
+    @subscriptions.add atom.commands.add 'atom-workspace', "ensime:stop", => @stopEnsime()
 
     @subscriptions.add atom.commands.add 'atom-workspace', "ensime:typecheck-all", => @typecheckAll()
     @subscriptions.add atom.commands.add 'atom-workspace', "ensime:typecheck-file", => @typecheckFile()
     @subscriptions.add atom.commands.add 'atom-workspace', "ensime:typecheck-buffer", => @typecheckBuffer()
 
-
     @subscriptions.add atom.commands.add 'atom-workspace', "ensime:go-to-definition", => @goToDefinitionOfCursor()
-
 
 
 
@@ -101,10 +104,14 @@ module.exports = Ensime =
 
   maybeStartEnsimeServer: ->
     if not @ensimeServerPid
-      @ensimeServerPid = startEnsimeServer()
-      @ensimeServerPid.on 'exit', (code) ->
-        @ensimeServerPid = null
-
+      if fs.existsSync(portFile())
+        modalMsg(".ensime/cache/port file already exists. Sure no running server already? If so, remove file and try again.")
+      else
+        @ensimeServerPid = startEnsimeServer()
+        @ensimeServerPid.on 'exit', (code) ->
+          @ensimeServerPid = null
+    else
+      modalMsg("Already running", "Ensime server process already running")
 
   generalHandler: (msg) ->
     head = car(msg)
@@ -142,31 +149,56 @@ module.exports = Ensime =
       # I removed activationEvents but then activate is called on load which makes a lot of stuff left uninited
       @statusbarView = new StatusbarView()
       @statusbarView.init()
-      @initMessagePanel()
+
+      @messages = new MessagePanelView
+          title: 'Ensime'
+      @messages.attach()
 
       @_client = createSwankClient(portFile(), (msg) => @generalHandler(msg) )
       @_client
 
-  startEnsime: ->
-    startEnsime(portFile())
-
   initProject: ->
-    @maybeStartEnsimeServer() #must busy-check for port-file with rescheduling since need to wait until sever has come that far
-    @client().sendAndThen("(swank:init-project)", (msg) -> )
+    initClient = =>
+      @client().sendAndThen("(swank:init-project)", (msg) -> )
 
-    # Register an EditorControl for each editor view
-    @controlSubscription = atom.workspace.observeTextEditors (editor) =>
-      editorView = atom.views.getView(editor)
-      editorView.flowController = new EditorControl(editor, @client())
+      # Register an EditorControl for each editor view
+      @controlSubscription = atom.workspace.observeTextEditors (editor) =>
+        editorView = atom.views.getView(editor)
+        editorView.flowController = new EditorControl(editor, @client())
+
+    # Startup server
+    if not fs.existsSync(portFile())
+      @maybeStartEnsimeServer()
+
+    # Client
+    tryStartup = (trysLeft) =>
+      if(trysLeft == 0)
+        modalMsg("Server doesn't seem to startup in time. Report bug!")
+      else if fs.existsSync(portFile())
+        initClient()
+      else
+        @clientStartupTimeout = setTimeout (=>
+          tryStartup(trysLeft - 1)
+        ), 500
+
+    tryStartup(20) # 10 sec should be enough?
 
 
 
+  stopEnsime: ->
+    @ensimeServerPid?.kill()
+    @ensimeServerPid = null
 
-  initMessagePanel: ->
-    @messages = new MessagePanelView
-        title: 'Ensime'
+    @messages.clear()
+    @messages.close()
+    @messages = null #GC now?
 
-    @messages.attach()
+    @statusbarView.destroy()
+    @statusbarView = null
+
+    @client().destroy() # TODO: Meh, undo the client-function thing and be clear about startup semantics
+    _client = null
+
 
 
   typecheckAll: ->

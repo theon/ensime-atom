@@ -39,6 +39,8 @@ class SwankClient
     )
     @openSocket(port)
 
+  destroy: ->
+    @socket.destroy()
 
   openSocket: (port) ->
     @socket = net.connect({port: port, allowHalfOpen: true} , ->
@@ -57,8 +59,8 @@ class SwankClient
       console.log("Ensime server close event")
     )
 
-    @socket.on('error', ->
-      console.log("Ensime server error event")
+    @socket.on('error', (data) ->
+      console.log("Ensime server error event: " + data)
     )
 
     @socket.on('timeout', ->

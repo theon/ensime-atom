@@ -26,17 +26,30 @@ class EditorControl
 
       # TODO if uri was changed, then we have to remove all current markers
       workspaceElement = atom.views.getView(atom.workspace)
-      # TODO: typecheck file on save
-      #if atom.config.get('Ensime.checkOnFileSave')
-      #  atom.commands.dispatch workspaceElement, 'ensime:typecheck-file'
+
+      # typecheck file on save
+      if atom.config.get('Ensime.typecheckWhen') in ['save', 'typing']
+        atom.commands.dispatch workspaceElement, 'ensime:typecheck-file'
 
     @subscriber.subscribe @scroll, 'mousemove', (e) =>
       @clearExprTypeTimeout()
       @exprTypeTimeout = setTimeout (=>
         @showExpressionType e
       ), 100
+
+
     @subscriber.subscribe @scroll, 'mouseout', (e) =>
       @clearExprTypeTimeout()
+
+    # Typecheck buffer while typing
+    atom.config.observe 'Ensime.typecheckWhen', (value) =>
+      if(value == 'typing')
+        @subscriber.subscribe @scroll, 'keydown', (e) =>
+          @clearTypecheckTimeout()
+          workspaceElement = atom.views.getView(atom.workspace) # TODO: what is this really?
+          @typecheckTimeout = setTimeout (=>
+            atom.commands.dispatch workspaceElement, 'ensime:typecheck-buffer'
+          ), atom.config.get('Ensime.typecheckTypingDelay')
 
 
 
@@ -64,6 +77,12 @@ class EditorControl
       clearTimeout @exprTypeTimeout
       @exprTypeTimeout = null
     @hideExpressionType()
+
+
+  clearTypecheckTimeout: ->
+    if @typecheckTimeout?
+      clearTimeout @typecheckTimeout
+      @typecheckTimeout = null
 
   # get expression type under mouse cursor and show it
   showExpressionType: (e) ->
