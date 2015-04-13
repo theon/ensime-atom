@@ -79,13 +79,13 @@ module.exports = Ensime =
 
     @subscriptions.add atom.commands.add 'atom-workspace', "ensime:stop-server", =>
       @ensimeServerPid?.kill()
+      @ensimeServerPid = null
 
     @subscriptions.add atom.commands.add 'atom-workspace', "ensime:typecheck-all", => @typecheckAll()
     @subscriptions.add atom.commands.add 'atom-workspace', "ensime:typecheck-file", => @typecheckFile()
     @subscriptions.add atom.commands.add 'atom-workspace', "ensime:typecheck-buffer", => @typecheckBuffer()
 
 
-    @subscriptions.add atom.commands.add 'atom-workspace', "ensime:init-builder", => @initBuilder()
     @subscriptions.add atom.commands.add 'atom-workspace', "ensime:go-to-definition", => @goToDefinitionOfCursor()
 
 
@@ -94,7 +94,8 @@ module.exports = Ensime =
   deactivate: ->
     @subscriptions.dispose()
     @controlSubscription.dispose()
-    @ensimeServerPid?.kill()
+    if not atom.config.get('Ensime.runServerDetached')
+      @ensimeServerPid?.kill()
 
   serialize: ->
 
@@ -183,9 +184,6 @@ module.exports = Ensime =
     swankMsg = "(swank:typecheck-file \"#{b.getPath()}\")"
     log("swankMsg: #{swankMsg}")
     @client().sendAndThen(swankMsg, (result) ->)
-
-  initBuilder: ->
-    #client.write(swankRpc("(swank:builder-init)"))
 
   goToDefinitionOfCursor: ->
     editor = atom.workspace.getActiveTextEditor()

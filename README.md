@@ -1,4 +1,4 @@
-# atom-ensime
+# Atom Ensime
 
 This is a work in progress to try to use [Ensime](https://github.com/ensime/) functionality in [Atom](https://atom.io)
 Way early still and will most likely be very buggy. Or maybe not start at all. The bootstrapping of the Ensime server might be an issue. Please let me know if you have any troubles with the few features implemented. I guess most problems will probably be related to bootstrapping of the Ensime server.
@@ -17,11 +17,15 @@ Way early still and will most likely be very buggy. Or maybe not start at all. T
 
 Note: Init project will start the server too, but need to check for portfile before
 
+## Complementing packages:
+- [Project manager](https://github.com/danielbrodin/atom-project-manager) is really handy to keep track of projects.
+- Need plugin to navigate back to last cursor position when "code surfing". Maybe https://atom.io/packages/last-cursor-position
 
 ## Features:
 - [x] jump to definition (alt-click or f4)
 - [x] hover for type info
 - [x] super basic errors and warnings (Ensime: typecheck file, typecheck buffer, typecheck all)
+- [ ] typecheck while typing
 - [ ] better errors and warnings with markings in gutter
 - [ ] errors on save or typing (currently only command)
 - [ ] customizable key modifiers on mouse commands. cmd-click, ctrl-click or alt-click for go to definition?
@@ -30,7 +34,7 @@ Note: Init project will start the server too, but need to check for portfile bef
 - [ ] view applied implicits
 
 ## Dev
-- checkout from git straight into .atom/packages. Need to have the right name on the folder: "ensime".
+- checkout from git straight into .atom/packages (or ln -s). Need to have the right name on the folder: "Ensime".
 - run apm install
 - "Window: reload" (ctrl-option-cmd l) to reload plugin from source while developing
 
@@ -42,8 +46,10 @@ https://groups.google.com/forum/#!searchin/ensime/log/ensime/1dWUQwnFoyk/0O12KPj
 ## Technical TODO:
 - [x] checkout typescript plugin for hover for type info
 - [x] option to start server detached for ease of debugging: https://nodejs.org/api/child_process.html#child_process_options_detached
-- [ ] update server log in a panel in atom
+- [x] update server log in a panel in atom (no copy paste though and terminal escape stuff)
+- [ ] Use port file to check for running server
 - [ ] server log in a panel in atom
+- [ ] re-insert activation events when this hits https://github.com/atom/settings-view/pull/371
 - [ ] server will stop logging when atom is reloaded since stdio is piped via node. Pipe to file directly from process
  and tail -f to buffer in atom?
 - [ ] seems I can have two clients attached to ensime server accidentaly.
@@ -69,3 +75,6 @@ https://groups.google.com/forum/#!searchin/ensime/log/ensime/1dWUQwnFoyk/0O12KPj
 - Emacs command ref: https://github.com/ensime/ensime-server/wiki/Emacs-Command-Reference
 - Ensime google group: https://groups.google.com/forum/#!forum/ensime
 - Startup of server from Emacs https://github.com/ensime/ensime-emacs/blob/master/ensime-startup.el
+- Space pen https://github.com/atom/space-pen/blob/master/src/space-pen.coffee
+- Space pen views https://github.com/atom/atom-space-pen-views/blob/master/src/scroll-view.coffee
+- Find and replace:https://github.com/atom/find-and-replace/blob/master/lib/project/results-pane.coffee

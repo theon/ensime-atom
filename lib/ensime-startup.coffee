@@ -4,7 +4,7 @@ fs = require('fs')
 {exec, spawn} = require('child_process')
 lisp = require('./lisp')
 {log} = require('./utils')
-
+EnsimeServerUpdateLogView = require('./views/ensime-server-update-log-view')
 createSbtStartScript = (scalaVersion, ensimeServerVersion, classpathFile) ->
   """
   import sbt._
@@ -70,6 +70,17 @@ updateEnsimeServer = ->
       buttons:
         Ok: ->
   else
+    #TODO: cleanup!
+    @serverUpdateLog = new EnsimeServerUpdateLogView()
+    # atom.workspace.addOpener (filePath) =>
+    #   @serverUpdateLog if filePath is EnsimeServerUpdateLogView.URI
+
+    # atom.workspace.open(EnsimeServerUpdateLogView.URI)
+
+    pane = atom.workspace.getActivePane()
+    pane.addItem @serverUpdateLog
+    pane.activateItem @serverUpdateLog
+
     if not fs.existsSync(tempdir)
       fs.mkdirSync(tempdir)
       fs.mkdirSync(tempdir + '/project')
@@ -91,6 +102,10 @@ updateEnsimeServer = ->
     pid = spawn("#{atom.config.get('Ensime.sbtExec')}", ['saveClasspath', 'clean'], {cwd: tempdir})
     pid.stdout.on 'data', (chunk) -> log(chunk.toString('utf8'))
     pid.stderr.on 'data', (chunk) -> log('ensime startup exec error: ' + chunk.toString('utf8'))
+
+    pid.stdout.on 'data', (chunk) => @serverUpdateLog.addRow(chunk.toString('utf8'))
+    pid.stderr.on 'data', (chunk) => @serverUpdateLog.addRow('ensime startup exec error: ' + chunk.toString('utf8'))
+
     pid.stdin.end()
 
 
