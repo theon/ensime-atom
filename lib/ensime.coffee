@@ -79,11 +79,10 @@ module.exports = Ensime =
 
   activate: (state) ->
     @subscriptions = new CompositeDisposable
-
+    @controllers = new WeakMap
     # Need to have a started server and port file
     @subscriptions.add atom.commands.add 'atom-workspace', "ensime:update-ensime-server", => updateEnsimeServer()
-    @subscriptions.add atom.commands.add 'atom-workspace', "ensime:init-project", => @initProject()
-
+    @subscriptions.add atom.commands.add 'atom-workspace', "ensime:start", => @initProject()
     @subscriptions.add atom.commands.add 'atom-workspace', "ensime:stop", => @stopEnsime()
 
     @subscriptions.add atom.commands.add 'atom-workspace', "ensime:typecheck-all", => @typecheckAll()
@@ -99,6 +98,7 @@ module.exports = Ensime =
     @controlSubscription.dispose()
     if not atom.config.get('Ensime.runServerDetached')
       @ensimeServerPid?.kill()
+    @deleteEditorControllers()
 
   serialize: ->
 
@@ -142,11 +142,10 @@ module.exports = Ensime =
       @handleScalaNotes(tail)
 
 
-  _client: null
-  client: ->
-    if(@_client) then @_client else
-      # This was moved from activate due to https://github.com/atom/settings-view/issues/356
-      # I removed activationEvents but then activate is called on load which makes a lot of stuff left uninited
+  initProject: ->
+    initClient = =>
+      @client = createSwankClient(portFile(), (msg) => @generalHandler(msg) )
+
       @statusbarView = new StatusbarView()
       @statusbarView.init()
 
@@ -154,17 +153,15 @@ module.exports = Ensime =
           title: 'Ensime'
       @messages.attach()
 
-      @_client = createSwankClient(portFile(), (msg) => @generalHandler(msg) )
-      @_client
-
-  initProject: ->
-    initClient = =>
-      @client().sendAndThen("(swank:init-project)", (msg) -> )
+      @client.post("(swank:init-project)", (msg) -> )
 
       # Register an EditorControl for each editor view
       @controlSubscription = atom.workspace.observeTextEditors (editor) =>
-        editorView = atom.views.getView(editor)
-        editorView.flowController = new EditorControl(editor, @client())
+        if not @controllers.get(editor)
+          @controllers.set(editor, new EditorControl(editor, @client))
+
+          @subscriptions.add editor.onDidDestroy () =>
+            @removeController editor
 
     # Startup server
     if not fs.existsSync(portFile())
@@ -184,6 +181,14 @@ module.exports = Ensime =
     tryStartup(20) # 10 sec should be enough?
 
 
+  removeController: (editor) ->
+    @controllers.get(editor)?.deactivate()
+    @controllers.delete(editor)
+
+  deleteEditorControllers: ->
+    for editor in atom.workspace.getTextEditors()
+      @removeController editor
+
 
   stopEnsime: ->
     @ensimeServerPid?.kill()
@@ -196,32 +201,34 @@ module.exports = Ensime =
     @statusbarView.destroy()
     @statusbarView = null
 
-    @client().destroy() # TODO: Meh, undo the client-function thing and be clear about startup semantics
-    _client = null
+    @deleteEditorControllers()
+
+    @client.destroy()
+    @client = null
 
 
 
   typecheckAll: ->
-    @client().sendAndThen("(swank:typecheck-all)", (msg) ->)
+    @client.post("(swank:typecheck-all)", (msg) ->)
 
   # typechecks currently open file
   typecheckBuffer: ->
     b = atom.workspace.getActiveTextEditor()?.getBuffer()
     swankMsg = "(swank:typecheck-file \"#{b.getPath()}\" #{JSON.stringify(b.getText())})"
     log("swankMsg: #{swankMsg}")
-    @client().sendAndThen(swankMsg, (result) ->)
+    @client.post(swankMsg, (result) ->)
 
   typecheckFile: ->
     b = atom.workspace.getActiveTextEditor()?.getBuffer()
     swankMsg = "(swank:typecheck-file \"#{b.getPath()}\")"
     log("swankMsg: #{swankMsg}")
-    @client().sendAndThen(swankMsg, (result) ->)
+    @client.post(swankMsg, (result) ->)
 
   goToDefinitionOfCursor: ->
     editor = atom.workspace.getActiveTextEditor()
     textBuffer = editor.getBuffer()
     pos = editor.getCursorBufferPosition()
-    @client().goToTypeAtPoint(textBuffer, pos)
+    @client.goToTypeAtPoint(textBuffer, pos)
 
   handleScalaNotes: (msg) ->
     array = sexpToJObject msg

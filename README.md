@@ -49,7 +49,9 @@ https://groups.google.com/forum/#!searchin/ensime/log/ensime/1dWUQwnFoyk/0O12KPj
 - [x] update server log in a panel in atom (no copy paste though and terminal escape stuff)
 - [x] Use port file to check for running server
 - [x] Remove "start-server" and let init do it all
-- [ ] EditorControl leaks and keeps swank client on stop. Fix some cleanup!
+- [x] EditorControl leaks and keeps swank client on stop. Fix some cleanup!
+- [x] Remove flowController-thing and look at Haskell IDE.
+- [ ] Separate each feature in own Editor Controller?
 - [ ] Make "start ensime" to start server(maybe) and client and "stop ensime" kill both
 - [ ] re-insert activation events when this hits https://github.com/atom/settings-view/pull/371
 - [ ] server will stop logging when atom is reloaded since stdio is piped via node. Pipe to file directly from process

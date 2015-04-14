@@ -5,9 +5,10 @@ module.exports =
 class LogView extends ScrollView
 
   @content: (params) ->
-    @div class: 'ensime-log-view scroll-view', =>
-      #@h1 class: 'panel-heading', params.title
-      @ul class: 'list-group padded', outlet: "list"
+    @div class: 'ensime-log-view scroll-view', tabIndex: -1, =>
+      @div class: 'log', tabIndex: -1, =>
+        #@h1 class: 'panel-heading', params.title
+        @ul class: 'list-group padded', tabIndex: -1, outlet: "list"
   initialize: (params) ->
     @title = params.title
 
