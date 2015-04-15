@@ -25,13 +25,12 @@ Note: Init project will start the server too, but need to check for portfile bef
 - [x] jump to definition (alt-click or f4)
 - [x] hover for type info
 - [x] super basic errors and warnings (Ensime: typecheck file, typecheck buffer, typecheck all)
-- [ ] typecheck while typing
+- [x] typecheck while typing
+- [x] Basic autocompletion
+- [x] errors on save or typing (currently only command)
 - [ ] better errors and warnings with markings in gutter
-- [ ] errors on save or typing (currently only command)
-- [ ] customizable key modifiers on mouse commands. cmd-click, ctrl-click or alt-click for go to definition?
-- [ ] Try using code-links or their approach to make underlined links when hovering with cmd/ctrl
-- [ ] autocompletion
 - [ ] view applied implicits
+- [ ] _insert your suggestion_
 
 ## Dev
 - checkout from git straight into .atom/packages (or ln -s). Need to have the right name on the folder: "Ensime".
@@ -51,17 +50,17 @@ https://groups.google.com/forum/#!searchin/ensime/log/ensime/1dWUQwnFoyk/0O12KPj
 - [x] Remove "start-server" and let init do it all
 - [x] EditorControl leaks and keeps swank client on stop. Fix some cleanup!
 - [x] Remove flowController-thing and look at Haskell IDE.
+- [x] Make "start ensime" to start server(maybe) and client and "stop ensime" kill both
+- [x] setting for typechecking current file: ask, on save, while typing + delay ms setting
+- [x] only try start server if no port-file
+- [x] put console logging under dev-flag or just move to separate log
+- [ ] Wait for analyzer ready msg - (:return (:abort 209 "Analyzer is not ready! Please wait.") 4)
 - [ ] Separate each feature in own Editor Controller?
-- [ ] Make "start ensime" to start server(maybe) and client and "stop ensime" kill both
 - [ ] re-insert activation events when this hits https://github.com/atom/settings-view/pull/371
 - [ ] server will stop logging when atom is reloaded since stdio is piped via node. Pipe to file directly from process
  and tail -f to buffer in atom?
-- [ ] seems I can have two clients attached to ensime server accidentaly.
-- [ ] setting for typechecking current file: ask, on save, while typing + delay ms setting
-- [ ] only try start server if no port-file
 - [ ] getPath is deprecated: https://github.com/atom/atom/blob/master/src/project.coffee#L471 Maybe need to ask about where .ensime is like Emacs.
 - [ ] add a bottom panel with tabs (one for errors/warnings, one for server log maybe)
-- [ ] put console logging under dev-flag or just move to separate log
 - [ ] Isolate swank/lisp - it leaks everywhere
 - [ ] See if we can use code-links for mouse clicks https://atom.io/packages/code-links
 

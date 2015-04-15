@@ -2,7 +2,7 @@ net = require('net')
 {SwankParser, buildMessage} = require './swank-protocol'
 {car, cdr, fromLisp} = require './lisp'
 {sexpToJObject} = require './swank-extras'
-
+{log} = require './utils'
 
 
 module.exports =
@@ -88,3 +88,25 @@ class SwankClient
         editor.setCursorScreenPosition(targetEditorPos)
 
       )
+
+  getCompletions: (textBuffer, bufferPosition, callback) =>
+    file = textBuffer.getPath()
+    offset = textBuffer.characterIndexForPosition(bufferPosition)
+    msg = "(swank:completions (:file \"#{file}\" :contents #{JSON.stringify(textBuffer.getText())}) #{offset} 5 nil)"
+    @post(msg, (result) ->
+      swankCompletions = result[':ok']?[':completions']
+      completions = ({text: c[':name'], type: JSON.stringify(c[':type-sig'])} for c in swankCompletions)
+      ### Autocomplete + :
+      suggestion =
+        text: 'someText' # OR
+        snippet: 'someText(${1:myArg})'
+        replacementPrefix: 'so' # (optional)
+        type: 'function' # (optional)
+        leftLabel: '' # (optional)
+        leftLabelHTML: '' # (optional)
+        rightLabel: '' # (optional)
+        rightLabelHTML: '' # (optional)
+        iconHTML: '' # (optional)
+      ###
+      callback(completions)
+    )

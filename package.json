@@ -14,11 +14,10 @@
     "jquery": "^2",
     "atom-message-panel": "~1.2.2"
   },
-  "____comment____providedServices": {
-    "code-links": {
-      "description": "Provides code links for Scala files using Ensime.",
+  "providedServices": {
+    "autocomplete.provider": {
       "versions": {
-        "0.2.0": "provideLinks"
+        "2.0.0": "provideAutocomplete"
       }
     }
   }

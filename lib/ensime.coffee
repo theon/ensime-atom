@@ -252,3 +252,23 @@ module.exports = Ensime =
 
   provideLinks: ->
     require('./provide-links-processor')
+
+  provideAutocomplete: ->
+    log('provideAutocomplete called')
+    getClient = =>
+      log('getClient called and this is ' + this + ", @client is " + @client)
+      @client
+
+    {
+      selector: '.source.scala'
+      disableForSelector: '.source.scala .comment'
+
+      getSuggestions: ({editor, bufferPosition, scopeDescriptor, prefix}) =>
+        if(getClient())
+          new Promise (resolve) =>
+            log('ensime.getSuggestions')
+            getClient().getCompletions(editor.getBuffer(), bufferPosition, resolve)
+        else
+          log('@client undefined')
+          []
+    }
