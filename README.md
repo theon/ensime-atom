@@ -22,15 +22,15 @@ Note: Init project will start the server too, but need to check for portfile bef
 - Need plugin to navigate back to last cursor position when "code surfing". Maybe https://atom.io/packages/last-cursor-position
 
 ## Features:
-- [x] jump to definition (alt-click or f4)
-- [x] hover for type info
-- [x] super basic errors and warnings (Ensime: typecheck file, typecheck buffer, typecheck all)
-- [x] typecheck while typing
+- [x] Jump to definition (alt-click or f4)
+- [x] Hover for type info
+- [x] Errors and warnings (Ensime: typecheck file, typecheck buffer, typecheck all)
+- [x] Typecheck while typing
 - [x] Basic autocompletion
-- [x] errors on save or typing (currently only command)
-- [ ] better errors and warnings with markings in gutter
-- [ ] view applied implicits
+- [ ] Better errors and warnings with markings in gutter
+- [ ] View applied implicits
 - [ ] _insert your suggestion_
+
 
 ## Dev
 - checkout from git straight into .atom/packages (or ln -s). Need to have the right name on the folder: "Ensime".
@@ -55,6 +55,7 @@ https://groups.google.com/forum/#!searchin/ensime/log/ensime/1dWUQwnFoyk/0O12KPj
 - [x] only try start server if no port-file
 - [x] put console logging under dev-flag or just move to separate log
 - [ ] Wait for analyzer ready msg - (:return (:abort 209 "Analyzer is not ready! Please wait.") 4)
+- [ ] Make update of server implicit from startup
 - [ ] Separate each feature in own Editor Controller?
 - [ ] re-insert activation events when this hits https://github.com/atom/settings-view/pull/371
 - [ ] server will stop logging when atom is reloaded since stdio is piped via node. Pipe to file directly from process
