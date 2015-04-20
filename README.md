@@ -54,8 +54,12 @@ https://groups.google.com/forum/#!searchin/ensime/log/ensime/1dWUQwnFoyk/0O12KPj
 - [x] setting for typechecking current file: ask, on save, while typing + delay ms setting
 - [x] only try start server if no port-file
 - [x] put console logging under dev-flag or just move to separate log
+- [ ] Handle types of autocompletion. Weird swank?
+- [ ] TEEEESTS! Mostly because turnaround is killing me
 - [ ] Wait for analyzer ready msg - (:return (:abort 209 "Analyzer is not ready! Please wait.") 4)
-- [ ] Make update of server implicit from startup
+- [ ] Make update of server implicit from startup'
+- [ ] Setting for autocomplete - "excludeLowerPriority"
+- [ ] Autocomplete: :type-sig (((("x" "Int") ("y" "Int"))) "Int")
 - [ ] Separate each feature in own Editor Controller?
 - [ ] re-insert activation events when this hits https://github.com/atom/settings-view/pull/371
 - [ ] server will stop logging when atom is reloaded since stdio is piped via node. Pipe to file directly from process

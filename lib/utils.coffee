@@ -34,11 +34,27 @@ modalMsg = (title, msg) ->
     buttons:
       Ok: ->
 
+
+formatSignature = (paramLists, returnType) ->
+  formatParamLists = (paramLists) ->
+    formatParamList = (paramList) ->
+      formatParam = (param) ->
+        "#{param[0]}: #{param[1]}"
+      p = (formatParam param for param in paramList)
+      p.join(", ")
+
+    formattedParamLists = (formatParamList paramList for paramList in paramLists)
+    formattedParamLists.join("|")
+
+  formattedSignature = formatParamLists(paramLists)  + " -> " + returnType
+
+
 module.exports = {
   isScalaSource,
   pixelPositionFromMouseEvent,
   screenPositionFromMouseEvent,
   getElementsByClass,
   log,
-  modalMsg
+  modalMsg,
+  formatSignature
 }

@@ -5,7 +5,7 @@ Ensime = require '../lib/ensime'
 #
 # To run a specific `it` or `describe` block add an `f` to the front (e.g. `fit`
 # or `fdescribe`). Remove the `f` to unfocus the block.
-
+###
 describe "Ensime", ->
   activationPromise = null
 
@@ -28,3 +28,4 @@ describe "Ensime", ->
         expect(atom.workspaceView.find('.ensime')).toExist()
         atom.workspaceView.trigger 'ensime:toggle'
         expect(atom.workspaceView.find('.ensime')).not.toExist()
+###

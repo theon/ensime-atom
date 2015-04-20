@@ -2,7 +2,7 @@ net = require('net')
 {SwankParser, buildMessage} = require './swank-protocol'
 {car, cdr, fromLisp} = require './lisp'
 {sexpToJObject} = require './swank-extras'
-{log} = require './utils'
+{log, formatSignature} = require './utils'
 
 
 module.exports =
@@ -95,7 +95,14 @@ class SwankClient
     msg = "(swank:completions (:file \"#{file}\" :contents #{JSON.stringify(textBuffer.getText())}) #{offset} 5 nil)"
     @post(msg, (result) ->
       swankCompletions = result[':ok']?[':completions']
-      completions = ({text: c[':name'], type: JSON.stringify(c[':type-sig'])} for c in swankCompletions)
+      translate = (c) ->
+        typeSig = c[':type-sig']
+        formattedSignature = formatSignature(typeSig[0], typeSig[1])
+
+          #(:type-sig (((("x" "Int") ("y" "Int"))) "Int") :type-id 9 :is-callable t :relevance 90 :to-insert nil)
+
+        {text: c[':name'], leftLabel: formattedSignature}
+      completions = (translate c for c in swankCompletions)
       ### Autocomplete + :
       suggestion =
         text: 'someText' # OR
