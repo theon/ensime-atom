@@ -11,9 +11,7 @@ Way early still and will most likely be very buggy. Or maybe not start at all. T
 ## Getting started
 - Open a project with a .ensime in root
 - Make sure to put path of sbt in settings.
-- cmd-shift-P Ensime: Update server. This will use sbt to download all deps and create a classpath file for the server. Make take a while and currently no log output :)
-- cmd-shift-P Ensime: Start server.
-- cmd-shift-P Ensime: Init project. This will create a swank client and connect to the ensime server
+- cmd-shift-P Ensime: Start.
 - Then you can use the features marked x below :)
 
 Note: Init project will start the server too, but need to check for portfile before
@@ -21,12 +19,12 @@ Note: Init project will start the server too, but need to check for portfile bef
 ## Complementing packages:
 - [Project manager](https://github.com/danielbrodin/atom-project-manager) is really handy to keep track of projects.
 - Need plugin to navigate back to last cursor position when "code surfing". Maybe https://atom.io/packages/last-cursor-position
+- [Autocomplete-plus](https://atom.io/packages/autocomplete-plus) (needed for autocomplete feature of this package)
 
 ## Features:
 - [x] Jump to definition (alt-click or f4)
 - [x] Hover for type info
-- [x] Errors and warnings (Ensime: typecheck file, typecheck buffer, typecheck all)
-- [x] Typecheck while typing
+- [x] Errors and warnings (Cmnds for typecheck file, typecheck buffer, typecheck all). Also setting for typecheck current file on save or while typing.
 - [x] Basic autocompletion
 - [ ] Better errors and warnings with markings in gutter
 - [ ] View applied implicits
@@ -46,7 +44,7 @@ https://groups.google.com/forum/#!searchin/ensime/log/ensime/1dWUQwnFoyk/0O12KPj
 ## Technical TODO:
 - [x] checkout typescript plugin for hover for type info
 - [x] option to start server detached for ease of debugging: https://nodejs.org/api/child_process.html#child_process_options_detached
-- [x] update server log in a panel in atom (no copy paste though and terminal escape stuff)
+- [x] update server log in a panel in atom
 - [x] Use port file to check for running server
 - [x] Remove "start-server" and let init do it all
 - [x] EditorControl leaks and keeps swank client on stop. Fix some cleanup!
@@ -69,7 +67,7 @@ https://groups.google.com/forum/#!searchin/ensime/log/ensime/1dWUQwnFoyk/0O12KPj
 - [ ] add a bottom panel with tabs (one for errors/warnings, one for server log maybe)
 - [ ] Isolate swank/lisp - it leaks everywhere
 - [ ] See if we can use code-links for mouse clicks https://atom.io/packages/code-links
-
+- [ ] Check if we can get rid of terminal escape stuff from log. Look at term2 or ask.
 
 ## Inspiration (steal if you can)
 - https://github.com/lukehoban/atom-ide-flow/
