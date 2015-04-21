@@ -56,12 +56,12 @@ https://groups.google.com/forum/#!searchin/ensime/log/ensime/1dWUQwnFoyk/0O12KPj
 - [x] put console logging under dev-flag or just move to separate log
 - [x] Handle types of autocompletion. Weird swank?
 - [x] TEEEESTS! Mostly because turnaround is killing me
+- [x] re-insert activation events when this hits https://github.com/atom/settings-view/pull/371
+- [x] Make update of server implicit from startup'
 - [ ] Wait for analyzer ready msg - (:return (:abort 209 "Analyzer is not ready! Please wait.") 4)
-- [ ] Make update of server implicit from startup'
 - [ ] Setting for autocomplete - "excludeLowerPriority"
 - [ ] Autocomplete: :type-sig (((("x" "Int") ("y" "Int"))) "Int")
 - [ ] Separate each feature in own Editor Controller?
-- [ ] re-insert activation events when this hits https://github.com/atom/settings-view/pull/371
 - [ ] server will stop logging when atom is reloaded since stdio is piped via node. Pipe to file directly from process
  and tail -f to buffer in atom?
 - [ ] getPath is deprecated: https://github.com/atom/atom/blob/master/src/project.coffee#L471 Maybe need to ask about where .ensime is like Emacs.
