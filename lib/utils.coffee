@@ -38,15 +38,15 @@ modalMsg = (title, msg) ->
 formatSignature = (paramLists, returnType) ->
   formatParamLists = (paramLists) ->
     formatParamList = (paramList) ->
-      formatParam = (param) ->
-        "#{param[0]}: #{param[1]}"
-      p = (formatParam param for param in paramList)
+      formatParam = (param, i) ->
+        "${#{i}:#{param[0]}: #{param[1]}}"
+      p = (formatParam(param, i+1) for param, i in paramList)
       p.join(", ")
 
     formattedParamLists = (formatParamList paramList for paramList in paramLists)
     formattedParamLists.join("|")
 
-  formattedSignature = formatParamLists(paramLists)  + " -> " + returnType
+  formatParamLists(paramLists)
 
 
 module.exports = {

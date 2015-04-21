@@ -6,6 +6,6 @@ describe 'formatSignature', ->
 
 
 
-    result = formatSignature(inputParams, "Int")
+    result = formatSignature(inputParams)
 
-    expect(result).toBe("x: Int, y: Int -> Int")
+    expect(result).toBe("${1:x: Int}, ${2:y: Int}")

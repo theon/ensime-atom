@@ -89,6 +89,17 @@ class SwankClient
 
       )
 
+  ###
+    (:prefix "te" :completions ((:name "test" :type-sig (((("x" "Int") ("y" "Int"))) "Int")
+    :type-id 9 :is-callable t :relevance 90 :to-insert nil) (:name "text" :type-sig (nil "text$") :type-id 5 :is-callable nil
+    :relevance 80 :to-insert nil)
+
+
+    (:name "templates" :type-sig (nil "templates$") :type-id 3 :is-callable nil :relevance 80 :to-insert nil)
+     (:name "Terminator" :type-sig (nil "Terminator$") :type-id 6 :is-callable nil :relevance 70 :to-insert nil)
+      (:name "TextAreaLength" :type-sig (nil "Int") :type-id 4 :is-callable nil :relevance 70 :to-insert nil))))
+  ###
+
   getCompletions: (textBuffer, bufferPosition, callback) =>
     file = textBuffer.getPath()
     offset = textBuffer.characterIndexForPosition(bufferPosition)
@@ -97,11 +108,11 @@ class SwankClient
       swankCompletions = result[':ok']?[':completions']
       translate = (c) ->
         typeSig = c[':type-sig']
-        formattedSignature = formatSignature(typeSig[0], typeSig[1])
+        formattedSignature = formatSignature(typeSig[0])
+        typeId = c[":type-id"]
+        log("Formatted params: " + formattedSignature)
+        {leftLabel: typeSig[1], snippet: "#{c[':name']}(#{formattedSignature})"}
 
-          #(:type-sig (((("x" "Int") ("y" "Int"))) "Int") :type-id 9 :is-callable t :relevance 90 :to-insert nil)
-
-        {text: c[':name'], leftLabel: formattedSignature}
       completions = (translate c for c in swankCompletions)
       ### Autocomplete + :
       suggestion =
