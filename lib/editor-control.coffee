@@ -15,6 +15,8 @@ class EditorControl
 
     @subscriber = new Subscriber()
 
+    @typecheckWhileTypingSubscriber = new Subscriber()
+
     @editor.onDidDestroy =>
       @deactivate()
 
@@ -44,13 +46,14 @@ class EditorControl
     # Typecheck buffer while typing
     atom.config.observe 'Ensime.typecheckWhen', (value) =>
       if(value == 'typing')
-        @subscriber.subscribe @scroll, 'keydown', (e) =>
+        @typecheckWhileTypingSubscriber.subscribe @scroll, 'keydown', (e) =>
           @clearTypecheckTimeout()
           workspaceElement = atom.views.getView(atom.workspace) # TODO: what is this really?
           @typecheckTimeout = setTimeout (=>
             atom.commands.dispatch workspaceElement, 'ensime:typecheck-buffer'
           ), atom.config.get('Ensime.typecheckTypingDelay')
-
+      else
+        @typecheckWhileTypingSubscriber.unsubscribe()
 
 
     # Try something like https://github.com/atom/atom/blob/master/src/text-editor-component.coffee#L365
@@ -67,6 +70,7 @@ class EditorControl
   deactivate: ->
     @clearExprTypeTimeout()
     @subscriber.unsubscribe()
+    @typecheckWhileTypingSubscriber.unsubscribe()
     @disposables.dispose()
     @editorView.control = undefined
 

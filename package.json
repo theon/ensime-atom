@@ -1,6 +1,9 @@
 {
   "name": "Ensime",
   "main": "./lib/ensime",
+  "activationCommands": {
+   "atom-workspace": "ensime:start"
+  },
   "version": "0.4.0",
   "description": "Ensime integration for atom",
   "repository": "https://github.com/hedefalk/atom-ensime",

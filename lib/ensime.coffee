@@ -8,7 +8,7 @@ StatusbarView = require './statusbar-view'
 {car, cdr, fromLisp} = require './lisp'
 {sexpToJObject} = require './swank-extras'
 EditorControl = require './editor-control'
-{updateEnsimeServer, startEnsimeServer} = require './ensime-startup'
+{updateEnsimeServer, startEnsimeServer, classpathFileName} = require './ensime-startup'
 {MessagePanelView, LineMessageView} = require 'atom-message-panel'
 {log, modalMsg} = require './utils'
 
@@ -107,9 +107,11 @@ module.exports = Ensime =
       if fs.existsSync(portFile())
         modalMsg(".ensime/cache/port file already exists. Sure no running server already? If so, remove file and try again.")
       else
-        @ensimeServerPid = startEnsimeServer()
-        @ensimeServerPid.on 'exit', (code) ->
-          @ensimeServerPid = null
+        startEnsimeServer((pid) =>
+          @ensimeServerPid = pid
+          @ensimeServerPid.on 'exit', (code) =>
+            @ensimeServerPid = null
+        )
     else
       modalMsg("Already running", "Ensime server process already running")
 
@@ -178,8 +180,10 @@ module.exports = Ensime =
           tryStartup(trysLeft - 1)
         ), 500
 
-    tryStartup(20) # 10 sec should be enough?
-
+    if(fs.existsSync(classpathFileName()))
+      tryStartup(20) # 10 sec should be enough?
+    else
+      tryStartup(200)
 
   removeController: (editor) ->
     @controllers.get(editor)?.deactivate()

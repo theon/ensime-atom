@@ -54,8 +54,8 @@ https://groups.google.com/forum/#!searchin/ensime/log/ensime/1dWUQwnFoyk/0O12KPj
 - [x] setting for typechecking current file: ask, on save, while typing + delay ms setting
 - [x] only try start server if no port-file
 - [x] put console logging under dev-flag or just move to separate log
-- [ ] Handle types of autocompletion. Weird swank?
-- [ ] TEEEESTS! Mostly because turnaround is killing me
+- [x] Handle types of autocompletion. Weird swank?
+- [x] TEEEESTS! Mostly because turnaround is killing me
 - [ ] Wait for analyzer ready msg - (:return (:abort 209 "Analyzer is not ready! Please wait.") 4)
 - [ ] Make update of server implicit from startup'
 - [ ] Setting for autocomplete - "excludeLowerPriority"
