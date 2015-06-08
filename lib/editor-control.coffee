@@ -2,7 +2,7 @@
 {TooltipView} = require './tooltip-view'
 {CompositeDisposable} = require 'atom'
 $ = require 'jquery'
-{isScalaSource, pixelPositionFromMouseEvent, screenPositionFromMouseEvent, getElementsByClass} = require './utils'
+{pixelPositionFromMouseEvent, screenPositionFromMouseEvent, getElementsByClass} = require './utils'
 
 
 class EditorControl
@@ -24,7 +24,6 @@ class EditorControl
     # buffer events for automatic check
     buffer = @editor.getBuffer()
     @disposables.add buffer.onDidSave () =>
-      return unless isScalaSource @editor
 
       # TODO if uri was changed, then we have to remove all current markers
       workspaceElement = atom.views.getView(atom.workspace)

@@ -10,7 +10,7 @@ StatusbarView = require './statusbar-view'
 EditorControl = require './editor-control'
 {updateEnsimeServer, startEnsimeServer, classpathFileName} = require './ensime-startup'
 {MessagePanelView, LineMessageView} = require 'atom-message-panel'
-{log, modalMsg} = require './utils'
+{log, modalMsg, isScalaSource} = require './utils'
 
 
 portFile = ->
@@ -159,7 +159,7 @@ module.exports = Ensime =
 
       # Register an EditorControl for each editor view
       @controlSubscription = atom.workspace.observeTextEditors (editor) =>
-        if not @controllers.get(editor)
+        if not (@controllers.get(editor) && isScalaSource(editor))
           @controllers.set(editor, new EditorControl(editor, @client))
 
           @subscriptions.add editor.onDidDestroy () =>
