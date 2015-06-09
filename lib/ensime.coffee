@@ -218,15 +218,11 @@ module.exports = Ensime =
   # typechecks currently open file
   typecheckBuffer: ->
     b = atom.workspace.getActiveTextEditor()?.getBuffer()
-    swankMsg = "(swank:typecheck-file \"#{b.getPath()}\" #{JSON.stringify(b.getText())})"
-    log("swankMsg: #{swankMsg}")
-    @client.post(swankMsg, (result) ->)
+    @client.typecheckBuffer(b)
 
   typecheckFile: ->
     b = atom.workspace.getActiveTextEditor()?.getBuffer()
-    swankMsg = "(swank:typecheck-file \"#{b.getPath()}\")"
-    log("swankMsg: #{swankMsg}")
-    @client.post(swankMsg, (result) ->)
+    @client.typecheckFile(b)
 
   goToDefinitionOfCursor: ->
     editor = atom.workspace.getActiveTextEditor()

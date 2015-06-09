@@ -26,6 +26,7 @@ Note: Init project will start the server too, but need to check for portfile bef
 - [x] Hover for type info
 - [x] Errors and warnings (Cmnds for typecheck file, typecheck buffer, typecheck all). Also setting for typecheck current file on save or while typing.
 - [x] Basic autocompletion
+- [ ] Goto definition by simple typing prefix (like cmd-N in Idea or cmd-shift-T in Eclipse?)
 - [ ] Better errors and warnings with markings in gutter
 - [ ] View applied implicits
 - [ ] _insert your suggestion_

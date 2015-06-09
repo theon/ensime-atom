@@ -80,14 +80,17 @@ class SwankClient
     @post("(swank:type-at-point \"#{file}\" #{offset})", (msg) ->
       # (:return (:ok (:arrow-type nil :name "Ingredient" :type-id 3 :decl-as class :full-name "se.kostbevakningen.model.record.Ingredient" :type-args nil :members nil :pos (:type offset :file "/Users/viktor/dev/projects/kostbevakningen/src/main/scala/se/kostbevakningen/model/record/Ingredient.scala" :offset 545) :outer-type-id nil)) 3)
       pos = msg[":ok"]?[":pos"]
-      targetFile = pos[":file"]
-      targetOffset = pos[":offset"]
-      #console.log("targetFile: #{targetFile}")
-      atom.workspace.open(targetFile).then (editor) ->
-        targetEditorPos = editor.getBuffer().positionForCharacterIndex(parseInt(targetOffset))
-        editor.setCursorScreenPosition(targetEditorPos)
-
-      )
+      # Sometimes no pos
+      if(pos)
+        targetFile = pos[":file"]
+        targetOffset = pos[":offset"]
+        #console.log("targetFile: #{targetFile}")
+        atom.workspace.open(targetFile).then (editor) ->
+          targetEditorPos = editor.getBuffer().positionForCharacterIndex(parseInt(targetOffset))
+          editor.setCursorScreenPosition(targetEditorPos)
+      else
+        log("No :pos in response from Ensime, cannot go anywhere")
+    )
 
   ###
     (:prefix "te" :completions ((:name "test" :type-sig (((("x" "Int") ("y" "Int"))) "Int")
@@ -128,3 +131,13 @@ class SwankClient
       ###
       callback(completions)
     )
+
+  typecheckBuffer: (b) =>
+    swankMsg = "(swank:typecheck-file \"#{b.getPath()}\" #{JSON.stringify(b.getText())})"
+    log("swankMsg: #{swankMsg}")
+    @post(swankMsg, (result) ->)
+
+  typecheckFile: (b) =>
+    swankMsg = "(swank:typecheck-file \"#{b.getPath()}\")"
+    log("swankMsg: #{swankMsg}")
+    @post(swankMsg, (result) ->)

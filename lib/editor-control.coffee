@@ -49,7 +49,7 @@ class EditorControl
           @clearTypecheckTimeout()
           workspaceElement = atom.views.getView(atom.workspace) # TODO: what is this really?
           @typecheckTimeout = setTimeout (=>
-            atom.commands.dispatch workspaceElement, 'ensime:typecheck-buffer'
+            @client.typecheckBuffer(@editor.getBuffer())
           ), atom.config.get('Ensime.typecheckTypingDelay')
       else
         @typecheckWhileTypingSubscriber.unsubscribe()
@@ -89,7 +89,7 @@ class EditorControl
 
   # get expression type under mouse cursor and show it
   showExpressionType: (e) ->
-    return unless isScalaSource(@editor) and not @exprTypeTooltip?
+    return if @exprTypeTooltip?
 
     pixelPt = pixelPositionFromMouseEvent(@editor, e)
     screenPt = @editor.screenPositionForPixelPosition(pixelPt)
