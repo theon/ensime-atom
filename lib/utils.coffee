@@ -35,7 +35,7 @@ modalMsg = (title, msg) ->
       Ok: ->
 
 
-formatSignature = (paramLists, returnType) ->
+formatSignature = (paramLists) ->
   formatParamLists = (paramLists) ->
     formatParamList = (paramList) ->
       formatParam = (param, i) ->
@@ -45,8 +45,10 @@ formatSignature = (paramLists, returnType) ->
 
     formattedParamLists = (formatParamList paramList for paramList in paramLists)
     formattedParamLists.join("|")
-
-  formatParamLists(paramLists)
+  if(paramLists)
+    formatParamLists(paramLists)
+  else
+    ""
 
 
 module.exports = {

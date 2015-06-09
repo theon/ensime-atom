@@ -15,8 +15,6 @@ class EditorControl
 
     @subscriber = new Subscriber()
 
-    @typecheckWhileTypingSubscriber = new Subscriber()
-
     @editor.onDidDestroy =>
       @deactivate()
 
@@ -30,7 +28,7 @@ class EditorControl
 
       # typecheck file on save
       if atom.config.get('Ensime.typecheckWhen') in ['save', 'typing']
-        atom.commands.dispatch workspaceElement, 'ensime:typecheck-file'
+        @client.typecheckFile(@editor.getBuffer())
 
     @subscriber.subscribe @scroll, 'mousemove', (e) =>
       @clearExprTypeTimeout()
@@ -45,14 +43,22 @@ class EditorControl
     # Typecheck buffer while typing
     atom.config.observe 'Ensime.typecheckWhen', (value) =>
       if(value == 'typing')
-        @typecheckWhileTypingSubscriber.subscribe @scroll, 'keydown', (e) =>
-          @clearTypecheckTimeout()
-          workspaceElement = atom.views.getView(atom.workspace) # TODO: what is this really?
-          @typecheckTimeout = setTimeout (=>
-            @client.typecheckBuffer(@editor.getBuffer())
-          ), atom.config.get('Ensime.typecheckTypingDelay')
+        @typecheckWhileTypingDisposable = @editor.onDidStopChanging () =>
+          @client.typecheckBuffer(@editor.getBuffer())
+
+
+        @disposables.add @typecheckWhileTypingDisposable
+
+        # @typecheckWhileTypingSubscriber.subscribe @scroll, 'keydown', (e) =>
+        #   @clearTypecheckTimeout()
+        #   workspaceElement = atom.views.getView(atom.workspace) # TODO: what is this really?
+        #   @typecheckTimeout = setTimeout (=>
+        #     @client.typecheckBuffer(@editor.getBuffer())
+        #   ), atom.config.get('Ensime.typecheckTypingDelay')
       else
-        @typecheckWhileTypingSubscriber.unsubscribe()
+        @disposables.remove @typecheckWhileTypingDisposable
+        @typecheckWhileTypingDisposable.dispose()
+        # @typecheckWhileTypingSubscriber.unsubscribe()
 
 
     # Try something like https://github.com/atom/atom/blob/master/src/text-editor-component.coffee#L365
@@ -69,7 +75,6 @@ class EditorControl
   deactivate: ->
     @clearExprTypeTimeout()
     @subscriber.unsubscribe()
-    @typecheckWhileTypingSubscriber.unsubscribe()
     @disposables.dispose()
     @editorView.control = undefined
 

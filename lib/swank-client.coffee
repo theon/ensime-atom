@@ -109,27 +109,29 @@ class SwankClient
     msg = "(swank:completions (:file \"#{file}\" :contents #{JSON.stringify(textBuffer.getText())}) #{offset} 5 nil)"
     @post(msg, (result) ->
       swankCompletions = result[':ok']?[':completions']
-      translate = (c) ->
-        typeSig = c[':type-sig']
-        formattedSignature = formatSignature(typeSig[0])
-        typeId = c[":type-id"]
-        log("Formatted params: " + formattedSignature)
-        {leftLabel: typeSig[1], snippet: "#{c[':name']}(#{formattedSignature})"}
 
-      completions = (translate c for c in swankCompletions)
-      ### Autocomplete + :
-      suggestion =
-        text: 'someText' # OR
-        snippet: 'someText(${1:myArg})'
-        replacementPrefix: 'so' # (optional)
-        type: 'function' # (optional)
-        leftLabel: '' # (optional)
-        leftLabelHTML: '' # (optional)
-        rightLabel: '' # (optional)
-        rightLabelHTML: '' # (optional)
-        iconHTML: '' # (optional)
-      ###
-      callback(completions)
+      if(swankCompletions) # Sometimes not, (:return (:ok (:prefix "sdf")) 5)
+        translate = (c) -> # (:return (:ok (:prefix "baz" :completions ((:name "baz" :type-sig (() "Int") :type-id 1)))) 4)
+          typeSig = c[':type-sig']
+          formattedSignature = formatSignature(typeSig[0])
+          typeId = c[":type-id"]
+          log("Formatted params: " + formattedSignature)
+          {leftLabel: typeSig[1], snippet: "#{c[':name']}(#{formattedSignature})"}
+
+        completions = (translate c for c in swankCompletions)
+        ### Autocomplete + :
+        suggestion =
+          text: 'someText' # OR
+          snippet: 'someText(${1:myArg})'
+          replacementPrefix: 'so' # (optional)
+          type: 'function' # (optional)
+          leftLabel: '' # (optional)
+          leftLabelHTML: '' # (optional)
+          rightLabel: '' # (optional)
+          rightLabelHTML: '' # (optional)
+          iconHTML: '' # (optional)
+        ###
+        callback(completions)
     )
 
   typecheckBuffer: (b) =>
