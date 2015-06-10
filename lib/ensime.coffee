@@ -194,17 +194,19 @@ module.exports = Ensime =
     @ensimeServerPid?.kill()
     @ensimeServerPid = null
 
-    @messages.clear()
-    @messages.close()
+    @messages?.clear()
+    @messages?.close()
     @messages = null #GC now?
 
-    @statusbarView.destroy()
+    @statusbarView?.destroy()
     @statusbarView = null
 
     @deleteEditorControllers()
 
-    @client.destroy()
+    @client?.destroy()
     @client = null
+
+    #atom.packages.deactivatePackage('Ensime')
 
 
 
