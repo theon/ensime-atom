@@ -10,19 +10,15 @@ StatusbarView = require './statusbar-view'
 EditorControl = require './editor-control'
 {updateEnsimeServer, startEnsimeServer, classpathFileName} = require './ensime-startup'
 {MessagePanelView, LineMessageView} = require 'atom-message-panel'
-{log, modalMsg, isScalaSource} = require './utils'
+{log, modalMsg, isScalaSource, projectPath} = require './utils'
 
 
 portFile = ->
     loadSettings = atom.getLoadSettings()
-    log('loadSettings: ' + loadSettings)
-    projectPath = atom.project.getPath()
-    log('project path: ' + projectPath)
-    projectPath + '/.ensime_cache/port'
+    projectPath() + '/.ensime_cache/port'
 
 
 createSwankClient = (portFileLoc, generalHandler) ->
-  console.log("portFileLoc: " + portFileLoc)
   port = fs.readFileSync(portFileLoc).toString()
   new SwankClient(port, generalHandler)
 

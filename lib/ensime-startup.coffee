@@ -3,7 +3,7 @@ fs = require('fs')
 {sexpToJObject} = require('./swank-extras')
 {exec, spawn} = require('child_process')
 lisp = require('./lisp')
-{log, modalMsg} = require('./utils')
+{log, modalMsg, projectPath} = require('./utils')
 EnsimeServerUpdateLogView = require('./views/ensime-server-update-log-view')
 createSbtStartScript = (scalaVersion, ensimeServerVersion, classpathFile) ->
   """
@@ -43,7 +43,7 @@ classpathFile = (scalaVersion, ensimeServerVersion) ->
   atom.packages.resolvePackagePath('Ensime') + "/classpath_#{scalaVersion}_#{ensimeServerVersion}"
 
 
-ensimeCache = -> atom.project.getPath() + '/.ensime_cache'
+ensimeCache = -> projectPath() + '/.ensime_cache'
 ensimeServerLogFile = -> ensimeCache() + '/server.log'
 
 readDotEnsime = (path)-> # TODO: error handling
@@ -65,11 +65,10 @@ scalaVersionOfProjectDotEnsime = (path) ->
 
 
 updateEnsimeServerManually = ->
-  projectPath = atom.project.getPath()
-  ensimeConfigFile = projectPath + '/.ensime'
+  ensimeConfigFile = projectPath() + '/.ensime'
   scalaVersion = scalaVersionOfProjectDotEnsime(ensimeConfigFile)
   ensimeServerVersion = atom.config.get('Ensime.ensimeServerVersion')
-  if not (projectPath and fs.existsSync(ensimeConfigFile))
+  if not (projectPath() and fs.existsSync(ensimeConfigFile))
     modalMsg('No .ensime found', "You need to have a project open with a .ensime in root.")
   else
     updateEnsimeServer(scalaVersion, ensimeServerVersion)
@@ -113,8 +112,7 @@ updateEnsimeServer = (scalaVersion, ensimeServerVersion) ->
 
 
 versions = ->
-  projectPath = atom.project.getPath()
-  ensimeConfigFile = projectPath + '/.ensime'
+  ensimeConfigFile = projectPath() + '/.ensime'
   scalaVersion = scalaVersionOfProjectDotEnsime(ensimeConfigFile)
   ensimeServerVersion = atom.config.get('Ensime.ensimeServerVersion')
   {scalaVersion: scalaVersion, ensimeServerVersion: ensimeServerVersion}
@@ -152,8 +150,7 @@ startEnsimeServer = (pidCallback) ->
       classpath = toolsJar + ':' + fs.readFileSync(cpF, {encoding: 'utf8'})
       javaCmd = "#{javaHome}bin/java"
       ensimeServerFlags = "#{atom.config.get('Ensime.ensimeServerFlags')}"
-      projectPath = atom.project.getPath()
-      ensimeConfigFile = projectPath + '/.ensime'
+      ensimeConfigFile = projectPath() + '/.ensime'
       args = ["-classpath", "#{classpath}", "-Densime.config=#{ensimeConfigFile}"]
       if ensimeServerFlags.length > 0
          args.push ensimeServerFlags  ## Weird, but extra " " broke everyting

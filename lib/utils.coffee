@@ -50,6 +50,7 @@ formatSignature = (paramLists) ->
   else
     ""
 
+projectPath = -> atom.project.getPaths()[0]
 
 module.exports = {
   isScalaSource,
@@ -58,5 +59,6 @@ module.exports = {
   getElementsByClass,
   log,
   modalMsg,
-  formatSignature
+  formatSignature,
+  projectPath
 }

@@ -110,6 +110,9 @@ class SwankClient
     @post(msg, (result) ->
       swankCompletions = result[':ok']?[':completions']
 
+
+      # TODO: This gave problem probably finalize:
+# (:return (:ok (:prefix "f" :completions ((:name "foo" :type-sig (() "String") :type-id 2660) (:name "finalize" :type-sig ((()) "Unit") :type-id 12 :is-callable t)))) 91)
       if(swankCompletions) # Sometimes not, (:return (:ok (:prefix "sdf")) 5)
         translate = (c) -> # (:return (:ok (:prefix "baz" :completions ((:name "baz" :type-sig (() "Int") :type-id 1)))) 4)
           typeSig = c[':type-sig']

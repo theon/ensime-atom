@@ -57,7 +57,7 @@ class EditorControl
         #   ), atom.config.get('Ensime.typecheckTypingDelay')
       else
         @disposables.remove @typecheckWhileTypingDisposable
-        @typecheckWhileTypingDisposable.dispose()
+        @typecheckWhileTypingDisposable?.dispose()
         # @typecheckWhileTypingSubscriber.unsubscribe()
 
 
