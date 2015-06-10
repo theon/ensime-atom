@@ -1,5 +1,6 @@
 # Download and startup of ensime server
 fs = require('fs')
+path = require('path')
 {sexpToJObject} = require('./swank-extras')
 {exec, spawn} = require('child_process')
 lisp = require('./lisp')
@@ -40,7 +41,7 @@ tempdir =  packageDir + "/ensime_update_"
 
 
 classpathFile = (scalaVersion, ensimeServerVersion) ->
-  atom.packages.resolvePackagePath('Ensime') + "/classpath_#{scalaVersion}_#{ensimeServerVersion}"
+  atom.packages.resolvePackagePath('Ensime') + path.sep + "classpath_#{scalaVersion}_#{ensimeServerVersion}"
 
 
 ensimeCache = -> projectPath() + '/.ensime_cache'
