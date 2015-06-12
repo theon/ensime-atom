@@ -35,21 +35,6 @@ modalMsg = (title, msg) ->
       Ok: ->
 
 
-formatSignature = (paramLists) ->
-  formatParamLists = (paramLists) ->
-    formatParamList = (paramList) ->
-      formatParam = (param, i) ->
-        "${#{i}:#{param[0]}: #{param[1]}}"
-      p = (formatParam(param, i+1) for param, i in paramList)
-      p.join(", ")
-
-    formattedParamLists = (formatParamList paramList for paramList in paramLists)
-    formattedParamLists.join("|")
-  if(paramLists)
-    formatParamLists(paramLists)
-  else
-    ""
-
 projectPath = -> atom.project.getPaths()[0]
 
 module.exports = {
@@ -59,6 +44,5 @@ module.exports = {
   getElementsByClass,
   log,
   modalMsg,
-  formatSignature,
   projectPath
 }

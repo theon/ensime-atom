@@ -1,5 +1,6 @@
 {View} = require 'atom-space-pen-views'
 
+# View for the little status messages down there where messages from Ensime server can be shown
 module.exports =
   class StatusbarView extends View
     @content: ->

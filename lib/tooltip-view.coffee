@@ -1,6 +1,7 @@
 {View} = require 'atom-space-pen-views'
 $ = require 'jquery'
 
+# Used for hover for type
 class TooltipView extends View
   @content: ->
     @div class: 'ensime-tooltip'

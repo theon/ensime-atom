@@ -1,4 +1,7 @@
+# Some parsing utilities, propbably buggy as hell, but works for the use cases I've seen so far
+
 {fromLisp} = require './lisp'
+
 
 typeIsArray = ( value ) ->
     value and
@@ -7,8 +10,6 @@ typeIsArray = ( value ) ->
         typeof value.length is 'number' and
         typeof value.splice is 'function' and
         not ( value.propertyIsEnumerable 'length' )
-
-
 
 arrToJObject = (x) ->
 
@@ -34,7 +35,6 @@ arrToJObject = (x) ->
       parseArray(x)
   else
     x
-  
 
 
 # Oh noes, this is crap, but fuck it and wait for json protocol

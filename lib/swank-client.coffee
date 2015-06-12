@@ -2,7 +2,7 @@ net = require('net')
 {SwankParser, buildMessage} = require './swank-protocol'
 {car, cdr, fromLisp} = require './lisp'
 {sexpToJObject} = require './swank-extras'
-{log, formatSignature} = require './utils'
+{log, formatCompletionsSignature} = require './utils'
 
 
 module.exports =
@@ -116,7 +116,7 @@ class SwankClient
       if(swankCompletions) # Sometimes not, (:return (:ok (:prefix "sdf")) 5)
         translate = (c) -> # (:return (:ok (:prefix "baz" :completions ((:name "baz" :type-sig (() "Int") :type-id 1)))) 4)
           typeSig = c[':type-sig']
-          formattedSignature = formatSignature(typeSig[0])
+          formattedSignature = formatCompletionsSignature(typeSig[0])
           typeId = c[":type-id"]
           log("Formatted params: " + formattedSignature)
           {leftLabel: typeSig[1], snippet: "#{c[':name']}(#{formattedSignature})"}
