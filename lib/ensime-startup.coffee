@@ -102,7 +102,7 @@ updateEnsimeServer = (scalaVersion, ensimeServerVersion) ->
   console.log("sbt: " + cmd)
 
   # run sbt "saveClasspath" "clean"
-  pid = spawn("#{atom.config.get('Ensime.sbtExec')}", ['saveClasspath', 'clean'], {cwd: tempdir})
+  pid = spawn("#{atom.config.get('Ensime.sbtExec')}", ['-Dsbt.log.noformat=true', 'saveClasspath', 'clean'], {cwd: tempdir})
   pid.stdout.on 'data', (chunk) -> log(chunk.toString('utf8'))
   pid.stderr.on 'data', (chunk) -> log('ensime startup exec error: ' + chunk.toString('utf8'))
 
