@@ -2,8 +2,8 @@ net = require('net')
 {SwankParser, buildMessage} = require './swank-protocol'
 {car, cdr, fromLisp} = require './lisp'
 {sexpToJObject} = require './swank-extras'
-{log, formatCompletionsSignature} = require './utils'
-
+{log} = require './utils'
+{formatCompletionsSignature} = require './formatting'
 
 module.exports =
 class SwankClient

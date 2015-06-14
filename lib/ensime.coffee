@@ -8,6 +8,7 @@ StatusbarView = require './statusbar-view'
 {car, cdr, fromLisp} = require './lisp'
 {sexpToJObject} = require './swank-extras'
 EditorControl = require './editor-control'
+ShowTypes = require './show-types'
 {updateEnsimeServer, startEnsimeServer, classpathFileName} = require './ensime-startup'
 {MessagePanelView, LineMessageView} = require 'atom-message-panel'
 {log, modalMsg, isScalaSource, projectPath} = require './utils'
@@ -75,7 +76,9 @@ module.exports = Ensime =
 
   activate: (state) ->
     @subscriptions = new CompositeDisposable
-    @controllers = new WeakMap
+    @editorControllers = new WeakMap
+    @showTypesControllers = new WeakMap
+
     # Need to have a started server and port file
     @subscriptions.add atom.commands.add 'atom-workspace', "ensime:update-ensime-server", => updateEnsimeServer()
     @subscriptions.add atom.commands.add 'atom-workspace', "ensime:start", => @initProject()
@@ -94,7 +97,7 @@ module.exports = Ensime =
     @controlSubscription.dispose()
     if not atom.config.get('Ensime.runServerDetached')
       @ensimeServerPid?.kill()
-    @deleteEditorControllers()
+    @deleteControllers()
 
   serialize: ->
 
@@ -153,13 +156,14 @@ module.exports = Ensime =
 
       @client.post("(swank:init-project)", (msg) -> )
 
-      # Register an EditorControl for each editor view
+      # TODO: Separate each feature in separate coffeescript class and figure out a cleaner way of cleanup
       @controlSubscription = atom.workspace.observeTextEditors (editor) =>
-        if not (@controllers.get(editor) && isScalaSource(editor))
-          @controllers.set(editor, new EditorControl(editor, @client))
+        if not (@editorControllers.get(editor) && isScalaSource(editor))
+          @editorControllers.set(editor, new EditorControl(editor, @client))
+          @showTypesControllers.set(editor, new ShowTypes(editor, @client))
 
           @subscriptions.add editor.onDidDestroy () =>
-            @removeController editor
+            @removeControllers editor
 
     # Startup server
     if not fs.existsSync(portFile())
@@ -181,13 +185,15 @@ module.exports = Ensime =
     else
       tryStartup(200)
 
-  removeController: (editor) ->
-    @controllers.get(editor)?.deactivate()
-    @controllers.delete(editor)
+  removeControllers: (editor) ->
+    @showTypesControllers.get(editor)?.deactivate()
+    @showTypesControllers.delete(editor)
+    @editorControllers.get(editor)?.deactivate()
+    @editorControllers.delete(editor)
 
-  deleteEditorControllers: ->
+  deleteControllers: ->
     for editor in atom.workspace.getTextEditors()
-      @removeController editor
+      @removeControllers editor
 
 
   stopEnsime: ->
@@ -201,7 +207,7 @@ module.exports = Ensime =
     @statusbarView?.destroy()
     @statusbarView = null
 
-    @deleteEditorControllers()
+    @deleteControllers()
 
     @client?.destroy()
     @client = null
