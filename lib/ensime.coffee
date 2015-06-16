@@ -158,7 +158,7 @@ module.exports = Ensime =
 
       # TODO: Separate each feature in separate coffeescript class and figure out a cleaner way of cleanup
       @controlSubscription = atom.workspace.observeTextEditors (editor) =>
-        if not (@editorControllers.get(editor) && isScalaSource(editor))
+        if not @editorControllers.get(editor) && isScalaSource(editor)
           @editorControllers.set(editor, new EditorControl(editor, @client))
           @showTypesControllers.set(editor, new ShowTypes(editor, @client))
 
@@ -255,7 +255,8 @@ module.exports = Ensime =
     addNote note for note in notes
 
   provideLinks: ->
-    require('./provide-links-processor')
+    Processor = require('./provide-links-processor')
+    new Processor(@client)
 
   provideAutocomplete: ->
     log('provideAutocomplete called')
