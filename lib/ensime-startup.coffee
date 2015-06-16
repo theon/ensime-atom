@@ -6,7 +6,7 @@ path = require('path')
 lisp = require('./lisp')
 {log, modalMsg, projectPath} = require('./utils')
 EnsimeServerUpdateLogView = require('./views/ensime-server-update-log-view')
-createSbtStartScript = (scalaVersion, ensimeServerVersion, classpathFile) ->
+createSbtClasspathBuild = (scalaVersion, ensimeServerVersion, classpathFile) ->
   """
   import sbt._
 
@@ -16,6 +16,9 @@ createSbtStartScript = (scalaVersion, ensimeServerVersion, classpathFile) ->
 
   scalaVersion := \"#{scalaVersion}\"
 
+  // allows local builds of scala
+  resolvers += Resolver.mavenLocal
+
   ivyScala := ivyScala.value map { _.copy(overrideScalaVersion = true) }
 
   resolvers += Resolver.sonatypeRepo(\"snapshots\")
@@ -24,7 +27,12 @@ createSbtStartScript = (scalaVersion, ensimeServerVersion, classpathFile) ->
 
   resolvers += \"Akka Repo\" at \"http://repo.akka.io/repository\"
 
-  libraryDependencies += \"org.ensime\" %% \"ensime\" % \"#{ensimeServerVersion}\"
+  libraryDependencies ++= Seq(
+    \"org.ensime\" %% \"ensime\" % \"#{ensimeServerVersion}\",
+    \"org.scala-lang\" % \"scala-compiler\" % scalaVersion.value force(),
+    \"org.scala-lang\" % \"scala-reflect\" % scalaVersion.value force(),
+    \"org.scala-lang\" % \"scalap\" % scalaVersion.value force()
+  )
 
   val saveClasspathTask = TaskKey[Unit](\"saveClasspath\", \"Save the classpath to a file\")
 
@@ -93,7 +101,7 @@ updateEnsimeServer = (scalaVersion, ensimeServerVersion) ->
     fs.mkdirSync(tempdir + '/project')
 
   # write out a build.sbt in this dir
-  fs.writeFileSync(tempdir + '/build.sbt', createSbtStartScript(scalaVersion, ensimeServerVersion,
+  fs.writeFileSync(tempdir + '/build.sbt', createSbtClasspathBuild(scalaVersion, ensimeServerVersion,
     classpathFile(scalaVersion, ensimeServerVersion)))
 
   fs.writeFileSync(tempdir + '/project/build.properties', 'sbt.version=0.13.8\n')
@@ -174,13 +182,6 @@ startEnsimeServer = (pidCallback) ->
       pidCallback(pid)
 
   checkForServerCP(20) # 40 sec should be enough?
-
-
-
-
-
-
-
 
 
 

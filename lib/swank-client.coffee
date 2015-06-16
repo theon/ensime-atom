@@ -74,12 +74,22 @@ class SwankClient
     @socket.write(swankMsg)
 
 
+
+
+# 15:48:18.030 [Thread-10] INFO  o.e.s.protocol.swank.SwankProtocol - Received msg: (:swank-rpc (swank:type-at-point "/Users/viktor/dev/projects/ensime-test-project/src/main/scala/Foo.scala" 368) 8)
+# 15:48:18.037 [ENSIME-akka.actor.default-dispatcher-3] INFO  o.e.s.protocol.swank.SwankProtocol - Writing: (:return (:ok (:arrow-type t :name "[T](it: => T)(implicit computer: net.liftweb.util.CanBind[T])net.liftweb.util.CssSel" :type-id 5 :result-type (:arrow-type nil :name "CssSel" :type-id 6 :decl-as trait :full-name "net.liftweb.util.CssSel" :type-args nil :members nil :pos nil :outer-type-id nil) :param-sections ((:params (("it" (:arrow-type nil :name "<byname>" :type-id 2 :decl-as class :full-name "scala.<byname>" :type-args ((:arrow-type nil :name "T" :type-id 3 :decl-as nil :full-name "net.liftweb.util.T...
+# 15:48:20.255 [Thread-10] INFO  o.e.s.protocol.swank.SwankProtocol - Received msg: (:swank-rpc (swank:inspect-type-at-point "/Users/viktor/dev/projects/ensime-test-project/src/main/scala/Foo.scala" 368) 9)
+# 15:48:20.616 [ENSIME-akka.actor.default-dispatcher-3] INFO  o.e.s.protocol.swank.SwankProtocol - Writing: (:return (:ok (:type (:arrow-type t :name "[T](it: => T)(implicit computer: net.liftweb.util.CanBind[T])net.liftweb.util.CssSel" :type-id 5 :result-type (:arrow-type nil :name "CssSel" :type-id 6 :decl-as trait :full-name "net.liftweb.util.CssSel" :type-args nil :members nil :pos nil :outer-type-id nil) :param-sections ((:params (("it" (:arrow-type nil :name "<byname>" :type-id 2 :decl-as class :full-name "scala.<byname>" :type-args ((:arrow-type nil :name "T" :type-id 3 :decl-as nil :full-name "net.liftweb...
+
+#(:return (:ok (:name "#>" :local-name "#>" :decl-pos nil :type (:arrow-type t :name "[T](it: => T)(implicit computer: net.liftweb.util.CanBind[T])net.liftweb.util.CssSel" :type-id 6 :result-type (:arrow-type nil :name "CssSel" :type-id 7 :decl-as trait :full-name "net.liftweb.util.CssSel" :type-args nil :members nil :pos nil :outer-type-id nil) :param-sections ((:params (("it" (:arrow-type nil :name "<byname>" :type-id 3 :decl-as class :full-name "scala.<byname>" :type-args ((:arrow-type nil :name "T" :type...
+
+
   goToTypeAtPoint: (textBuffer, bufferPosition) =>
     offset = textBuffer.characterIndexForPosition(bufferPosition)
     file = textBuffer.getPath()
-    @post("(swank:type-at-point \"#{file}\" #{offset})", (msg) ->
+    @post("(swank:symbol-at-point \"#{file}\" #{offset})", (msg) ->
       # (:return (:ok (:arrow-type nil :name "Ingredient" :type-id 3 :decl-as class :full-name "se.kostbevakningen.model.record.Ingredient" :type-args nil :members nil :pos (:type offset :file "/Users/viktor/dev/projects/kostbevakningen/src/main/scala/se/kostbevakningen/model/record/Ingredient.scala" :offset 545) :outer-type-id nil)) 3)
-      pos = msg[":ok"]?[":pos"]
+      pos = msg[":ok"]?[":decl-pos"]
       # Sometimes no pos
       if(pos)
         targetFile = pos[":file"]
@@ -89,7 +99,7 @@ class SwankClient
           targetEditorPos = editor.getBuffer().positionForCharacterIndex(parseInt(targetOffset))
           editor.setCursorScreenPosition(targetEditorPos)
       else
-        log("No :pos in response from Ensime, cannot go anywhere")
+        log("No :decl-pos in response from Ensime, cannot go anywhere")
     )
 
   ###
