@@ -22,6 +22,12 @@
       "versions": {
         "2.0.0": "provideAutocomplete"
       }
+    },
+    "code-links": {
+      "description": "Provides code links for Scala files.",
+      "versions": {
+        "0.2.0": "provideLinks"
+      }
     }
   }
 }

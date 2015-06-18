@@ -148,11 +148,29 @@ class SwankClient
     )
 
   typecheckBuffer: (b) =>
-    swankMsg = "(swank:typecheck-file \"#{b.getPath()}\" #{JSON.stringify(b.getText())})"
+    swankMsg = "(swank:typecheck-file (:file \"#{b.getPath()}\" :contents #{JSON.stringify(b.getText())}))"
     log("swankMsg: #{swankMsg}")
     @post(swankMsg, (result) ->)
 
   typecheckFile: (b) =>
-    swankMsg = "(swank:typecheck-file \"#{b.getPath()}\")"
+    swankMsg = "(swank:typecheck-file (:file \"#{b.getPath()}\"))"
     log("swankMsg: #{swankMsg}")
     @post(swankMsg, (result) ->)
+
+  # TODO: make it incremental if perf. issue. Now this requests the whole thing every time
+  # Probably need to branch out code-links and make something more custom with control over life cycle.
+  # then we can ask for symbol-designations while typing incrementally
+  getSymbolDesignations: (editor) ->
+    b = editor.getBuffer()
+    range = b.getRange()
+    startO = b.characterIndexForPosition(range.start)
+    endO = b.characterIndexForPosition(range.end)
+
+    symbols = "var val varField valField object class trait package param"
+    swankMsg = "(swank:symbol-designations (:file \"#{b.getPath()}\" :contents #{JSON.stringify(b.getText())}) #{startO} #{endO} (#{symbols}))"
+    @post(swankMsg, (result) ->
+      log("symbol-designations: " + result)
+    )
+    []
+
+    #(:return (:ok (:file "/Users/viktor/dev/projects/ensime-test-project/src/main/scala/Foo.scala" :syms ((param 305 306) (param 309 310) (valField 319 331)))) 3)

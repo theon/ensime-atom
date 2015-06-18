@@ -242,21 +242,22 @@ module.exports = Ensime =
 
     addNote = (note) =>
       file = note[':file']
-      @messages.add new LineMessageView
-          file: file
-          line: note[':line']
-          character: note[':col']
-          message: note[':msg']
-          className: switch note[':severity']
-            when "error" then "highlight-error"
-            when "warning" then "highlight-warning"
-            else ""
+      if(not file.includes('dep-src'))
+        @messages.add new LineMessageView
+            file: file
+            line: note[':line']
+            character: note[':col']
+            message: note[':msg']
+            className: switch note[':severity']
+              when "error" then "highlight-error"
+              when "warning" then "highlight-warning"
+              else ""
     @messages.attach()
     addNote note for note in notes
 
   provideLinks: ->
     Processor = require('./provide-links-processor')
-    new Processor(@client)
+    new Processor( {getClient: => @client})
 
   provideAutocomplete: ->
     log('provideAutocomplete called')
