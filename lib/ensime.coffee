@@ -1,6 +1,7 @@
 net = require('net')
 exec = require('child_process').exec
 fs = require 'fs'
+path = require('path')
 {Subscriber} = require 'emissary'
 SwankClient = require './swank-client'
 StatusbarView = require './statusbar-view'
@@ -90,7 +91,16 @@ module.exports = Ensime =
 
     @subscriptions.add atom.commands.add 'atom-workspace', "ensime:go-to-definition", => @goToDefinitionOfCursor()
 
-
+    # https://discuss.atom.io/t/ok-to-use-grammar-cson-for-just-file-assoc/17801/11
+    Promise.resolve(
+      atom.packages.isPackageLoaded('language-scala') && atom.packages.activatePackage('language-scala')
+    ).then (languageScalaPkg) ->
+      if languageScalaPkg
+        # language-scala is loaded and activated
+      else
+        # language-scala is not loaded
+        grammar = atom.packages.resolvePackagePath('Ensime') + path.sep + 'grammars-hidden' + path.sep + 'scala.cson'
+        atom.grammars.loadGrammar grammar
 
   deactivate: ->
     @subscriptions.dispose()
