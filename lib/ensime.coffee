@@ -7,11 +7,10 @@ SwankClient = require './swank-client'
 StatusbarView = require './statusbar-view'
 {CompositeDisposable} = require 'atom'
 {car, cdr, fromLisp} = require './lisp'
-{sexpToJObject} = require './swank-extras'
 EditorControl = require './editor-control'
 ShowTypes = require './show-types'
 {updateEnsimeServer, startEnsimeServer, classpathFileName} = require './ensime-startup'
-{MessagePanelView, LineMessageView} = require 'atom-message-panel'
+TypeCheckingFeature = require('./features/typechecking')
 {log, modalMsg, isScalaSource, projectPath} = require './utils'
 
 
@@ -23,8 +22,6 @@ portFile = ->
 createSwankClient = (portFileLoc, generalHandler) ->
   port = fs.readFileSync(portFileLoc).toString()
   new SwankClient(port, generalHandler)
-
-
 
 
 module.exports = Ensime =
@@ -139,34 +136,31 @@ module.exports = Ensime =
     else if(headStr == ':indexer-ready')
       @statusbarView.setText('indexer ready')
 
-    else if(headStr == ':clear-all-java-notes')
-      @statusbarView.setText('feature todo: clear all java notes')
-
-    else if(headStr == ':clear-all-scala-notes')
-      log(":clear-all-scala-notes received")
-      @messages.clear()
-
     else if(headStr.startsWith(':background-message'))
       @statusbarView.setText("#{tail}")
 
     else if(headStr == ':scala-notes')
-      @handleScalaNotes(tail)
+      @typechecking.addScalaNotes(tail)
+
+    else if(headStr == ':clear-all-scala-notes')
+      @typechecking.clearScalaNotes()
+
+
 
 
   initProject: ->
+    @typechecking = new TypeCheckingFeature()
+
     initClient = =>
+
       @client = createSwankClient(portFile(), (msg) => @generalHandler(msg) )
+
 
       @statusbarView = new StatusbarView()
       @statusbarView.init()
 
-      @messages = new MessagePanelView
-          title: 'Ensime'
-      @messages.attach()
-
       @client.post("(swank:init-project)", (msg) -> )
 
-      # TODO: Separate each feature in separate coffeescript class and figure out a cleaner way of cleanup
       @controlSubscription = atom.workspace.observeTextEditors (editor) =>
         if not @editorControllers.get(editor) && isScalaSource(editor)
           @editorControllers.set(editor, new EditorControl(editor, @client))
@@ -210,9 +204,7 @@ module.exports = Ensime =
     @ensimeServerPid?.kill()
     @ensimeServerPid = null
 
-    @messages?.clear()
-    @messages?.close()
-    @messages = null #GC now?
+
 
     @statusbarView?.destroy()
     @statusbarView = null
@@ -221,6 +213,12 @@ module.exports = Ensime =
 
     @client?.destroy()
     @client = null
+
+
+    @typechecking?.destroy()
+    @typechecking = null
+
+
 
     #atom.packages.deactivatePackage('Ensime')
 
@@ -244,26 +242,7 @@ module.exports = Ensime =
     pos = editor.getCursorBufferPosition()
     @client.goToTypeAtPoint(textBuffer, pos)
 
-  handleScalaNotes: (msg) ->
-    array = sexpToJObject msg
-    result = array[0]
-    notes = result[':notes']
 
-
-    addNote = (note) =>
-      file = note[':file']
-      if(not file.includes('dep-src'))
-        @messages.add new LineMessageView
-            file: file
-            line: note[':line']
-            character: note[':col']
-            message: note[':msg']
-            className: switch note[':severity']
-              when "error" then "highlight-error"
-              when "warning" then "highlight-warning"
-              else ""
-    @messages.attach()
-    addNote note for note in notes
 
   provideLinks: ->
     Processor = require('./provide-links-processor')

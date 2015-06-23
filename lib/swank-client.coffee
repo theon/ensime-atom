@@ -160,16 +160,32 @@ class SwankClient
   # TODO: make it incremental if perf. issue. Now this requests the whole thing every time
   # Probably need to branch out code-links and make something more custom with control over life cycle.
   # then we can ask for symbol-designations while typing incrementally
+  # TODO: Move out to symbol-designations module
   getSymbolDesignations: (editor) ->
     b = editor.getBuffer()
     range = b.getRange()
     startO = b.characterIndexForPosition(range.start)
     endO = b.characterIndexForPosition(range.end)
-
-    symbols = "var val varField valField object class trait package param"
+    symbols = "object class trait package constructor importedName typeParam param varField valField operator var val functionCall"
     swankMsg = "(swank:symbol-designations (:file \"#{b.getPath()}\" :contents #{JSON.stringify(b.getText())}) #{startO} #{endO} (#{symbols}))"
     @post(swankMsg, (result) ->
       log("symbol-designations: " + result)
+      syms = result[":ok"][":syms"]
+      decorate = (sym) ->
+        startPos = b.positionForCharacterIndex(parseInt(sym[1]))
+        endPos = b.positionForCharacterIndex(parseInt(sym[2]))
+        marker = editor.markBufferRange([startPos, endPos],
+                invalidate: 'inside',
+                class: "scala #{sym[0]}"
+                )
+        decoration = editor.decorateMarker(marker,
+          type: 'highlight',
+          class: sym[0]
+        )
+        marker
+
+      decorations = decorate sym for sym in syms
+
     )
     []
 

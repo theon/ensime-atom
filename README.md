@@ -59,6 +59,11 @@ https://groups.google.com/forum/#!searchin/ensime/log/ensime/1dWUQwnFoyk/0O12KPj
 - [x] TEEEESTS! Mostly because turnaround is killing me
 - [x] re-insert activation events when this hits https://github.com/atom/settings-view/pull/371
 - [x] Make update of server implicit from startup'
+- [x] Seems we're dependent on language-scala package. At least code-links doesn't seem to realize .scala are source.scala
+- [ ] Check out https://github.com/OmniSharp/omnisharp-atom Seems we can learn a lot!
+- [ ] Create FRP stream for editors that features can use.
+- [ ] Look how https://github.com/OmniSharp/omnisharp-atom/wiki makes autocomplete and linter install automatically
+- [ ] ditch swank for jerk
 - [ ] Wait for analyzer ready msg - (:return (:abort 209 "Analyzer is not ready! Please wait.") 4)
 - [ ] Setting for autocomplete - "excludeLowerPriority"
 - [ ] Autocomplete: :type-sig (((("x" "Int") ("y" "Int"))) "Int")
