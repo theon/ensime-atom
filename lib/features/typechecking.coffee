@@ -27,21 +27,19 @@ class TypeChecking
 
 
   addScalaNotes: (msg) ->
-    array = sexpToJObject msg
-    result = array[0]
-    notes = result[':notes']
+    notes = msg.notes
 
     # Nah? We might already have stuff
-    @notesByFile = _.groupBy(notes, (note) -> note[':file'])
+    @notesByFile = _.groupBy(notes, (note) -> note.file)
 
     addNoteToMessageView = (note) =>
-      file = note[':file']
+      file = note.file
       @messages.add new LineMessageView
           file: file
-          line: note[':line']
-          character: note[':col']
-          message: note[':msg']
-          className: switch note[':severity']
+          line: note.line
+          character: note.col
+          message: note.msg
+          className: switch note.severity
             when "error" then "highlight-error"
             when "warning" then "highlight-warning"
             else ""
@@ -55,13 +53,6 @@ class TypeChecking
           editor = @editors.get(file)
           # for note in notes
           #   editor.markRegio
-
-
-
-
-
-
-
 
 
   clearScalaNotes: ->

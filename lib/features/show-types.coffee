@@ -10,6 +10,7 @@ class ShowTypes
 
     @editorView = atom.views.getView(@editor);
 
+
     @scroll = $(getElementsByClass(@editorView, '.scroll-view'))
 
     @subscriber.subscribe @scroll, 'mousemove', (e) =>
@@ -24,6 +25,8 @@ class ShowTypes
 
     @editor.onDidDestroy =>
       @deactivate()
+
+    #TODO: Can I add a lostFocus-handler to mitigate: https://github.com/ensime/ensime-atom/issues/1
 
   # get expression type under mouse cursor and show it
   showExpressionType: (e) ->
@@ -51,14 +54,14 @@ class ShowTypes
     textBuffer = @editor.getBuffer()
     offset = textBuffer.characterIndexForPosition(bufferPt)
 
+    req =
+      typehint: "SymbolAtPointReq"
+      #typehint: "TypeAtPointReq"
+      file: @editor.getPath()
+      point: offset
 
-    req = """{"typehint":"TypeAtPointReq","file":"#{@editor.getPath()}","range":{"from":#{offset},"to":#{offset}}}"""
-
-    @client.postString(req, (msg) =>
-      # (:return (:ok (:arrow-type nil :name "Ingredient" :type-id 3 :decl-as class :full-name "se.kostbevakningen.model.record.Ingredient" :type-args nil :members nil :pos (:type offset :file "/Users/viktor/dev/projects/kostbevakningen/src/main/scala/se/kostbevakningen/model/record/Ingredient.scala" :offset 545) :outer-type-id nil)) 3)
-
-
-      @exprTypeTooltip?.updateText(formatType(okMsg))
+    @client.post(req, (msg) =>
+      @exprTypeTooltip?.updateText(formatType(msg.type))
 
     )
 

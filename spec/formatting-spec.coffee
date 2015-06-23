@@ -17,6 +17,60 @@ describe 'formatCompletionsSignature', ->
     expect(result).toBe("${1:x: Int}, ${2:y: Int}")
 
 
+
+  # 
+  # "type": {
+  #   "resultType": {
+  #     "name": "String",
+  #     "fullName": "java.lang.String",
+  #     "typehint": "BasicTypeInfo",
+  #     "typeId": 4,
+  #     "typeArgs": [],
+  #     "members": [],
+  #     "declAs": {
+  #       "typehint": "Class"
+  #     }
+  #   },
+  #   "name": "(in: Array[Byte])String",
+  #   "paramSections": [
+  #     {
+  #       "params": [
+  #         [
+  #           "in",
+  #           {
+  #             "name": "Array",
+  #             "fullName": "scala.Array",
+  #             "typehint": "BasicTypeInfo",
+  #             "typeId": 1,
+  #             "typeArgs": [
+  #               {
+  #                 "name": "Byte",
+  #                 "fullName": "scala.Byte",
+  #                 "typehint": "BasicTypeInfo",
+  #                 "typeId": 2,
+  #                 "typeArgs": [],
+  #                 "members": [],
+  #                 "declAs": {
+  #                   "typehint": "Class"
+  #                 }
+  #               }
+  #             ],
+  #             "members": [],
+  #             "declAs": {
+  #               "typehint": "Class"
+  #             }
+  #           }
+  #         ]
+  #       ],
+  #       "isImplicit": false
+  #     }
+  #   ],
+  #   "typehint": "ArrowTypeInfo",
+  #   "typeId": 3
+  # }
+  #
+  #
+
 describe 'formatType', ->
   it "should format simple type (scala.Int)", ->
     input = """

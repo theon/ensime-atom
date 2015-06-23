@@ -82,6 +82,7 @@ module.exports = Ensime =
     @subscriptions.add atom.commands.add 'atom-workspace', "ensime:stop", => @stopEnsime()
 
     @subscriptions.add atom.commands.add 'atom-workspace', "ensime:typecheck-all", => @typecheckAll()
+    @subscriptions.add atom.commands.add 'atom-workspace', "ensime:unload-all", => @unloadAll()
     @subscriptions.add atom.commands.add 'atom-workspace', "ensime:typecheck-file", => @typecheckFile()
     @subscriptions.add atom.commands.add 'atom-workspace', "ensime:typecheck-buffer", => @typecheckBuffer()
 
@@ -225,6 +226,9 @@ module.exports = Ensime =
 
   typecheckAll: ->
     @client.post( {"typehint": "TypecheckAllReq"}, (msg) ->)
+
+  unloadAll: ->
+    @client.post( {"typehint": "UnloadAllReq"}, (msg) ->)
 
   # typechecks currently open file
   typecheckBuffer: ->

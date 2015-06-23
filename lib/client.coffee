@@ -13,8 +13,7 @@ class Client
 
 
     @parser = new Swank.SwankParser( (env) =>
-      console.log("Received from Ensime server: #{env}")
-#      "{"msg":{"implementation":{"name":"ENSIME"},"version":"0.8.15"},"callId":1}"
+      console.log("incoming: #{env}")
       json = JSON.parse(env)
       callId = json.callId
       # If :return - lookup in map, otherwise use some general function for handling general msgs
@@ -64,8 +63,8 @@ class Client
   postString: (msg, callback) =>
     swankMsg = Swank.buildMessage """{"req": #{msg}, "callId": #{@ensimeMessageCounter}}"""
     @callbackMap[@ensimeMessageCounter++] = callback
-    log("socket messages: " + swankMsg)
-    @socket.write(swankMsg)
+    log("outgoing: " + swankMsg)
+    @socket.write(swankMsg, "UTF8")
 
   # Public:
   post: (msg, callback) ->
@@ -76,51 +75,52 @@ class Client
   goToTypeAtPoint: (textBuffer, bufferPosition) =>
     offset = textBuffer.characterIndexForPosition(bufferPosition)
     file = textBuffer.getPath()
-    @post("(swank:symbol-at-point \"#{file}\" #{offset})", (msg) ->
-      # (:return (:ok (:arrow-type nil :name "Ingredient" :type-id 3 :decl-as class :full-name "se.kostbevakningen.model.record.Ingredient" :type-args nil :members nil :pos (:type offset :file "/Users/viktor/dev/projects/kostbevakningen/src/main/scala/se/kostbevakningen/model/record/Ingredient.scala" :offset 545) :outer-type-id nil)) 3)
-      pos = msg[":ok"]?[":decl-pos"]
+
+    req =
+      typehint: "SymbolAtPointReq"
+      file: file
+      point: offset
+
+    @post(req, (msg) ->
+      pos = msg.declPos
       # Sometimes no pos
       if(pos)
-        targetFile = pos[":file"]
-        targetOffset = pos[":offset"]
+        targetFile = pos.file
+        targetOffset = pos.offset
         #console.log("targetFile: #{targetFile}")
         atom.workspace.open(targetFile).then (editor) ->
           targetEditorPos = editor.getBuffer().positionForCharacterIndex(parseInt(targetOffset))
           editor.setCursorScreenPosition(targetEditorPos)
       else
-        log("No :decl-pos in response from Ensime, cannot go anywhere")
+        log("No declPos in response from Ensime, cannot go anywhere")
     )
 
-  ###
-    (:prefix "te" :completions ((:name "test" :type-sig (((("x" "Int") ("y" "Int"))) "Int")
-    :type-id 9 :is-callable t :relevance 90 :to-insert nil) (:name "text" :type-sig (nil "text$") :type-id 5 :is-callable nil
-    :relevance 80 :to-insert nil)
-
-
-    (:name "templates" :type-sig (nil "templates$") :type-id 3 :is-callable nil :relevance 80 :to-insert nil)
-     (:name "Terminator" :type-sig (nil "Terminator$") :type-id 6 :is-callable nil :relevance 70 :to-insert nil)
-      (:name "TextAreaLength" :type-sig (nil "Int") :type-id 4 :is-callable nil :relevance 70 :to-insert nil))))
-  ###
 
   getCompletions: (textBuffer, bufferPosition, callback) =>
     file = textBuffer.getPath()
     offset = textBuffer.characterIndexForPosition(bufferPosition)
-    msg = "(swank:completions (:file \"#{file}\" :contents #{JSON.stringify(textBuffer.getText())}) #{offset} 5 nil)"
+
+    msg =
+      typehint: "CompletionsReq"
+      fileInfo:
+        file: file
+        contents: textBuffer.getText()
+      point: offset
+      maxResults: 5
+      caseSens: false
+      reload: true
+
     @post(msg, (result) ->
-      swankCompletions = result[':ok']?[':completions']
+      completions = result.completions
 
 
-      # TODO: This gave problem probably finalize:
-# (:return (:ok (:prefix "f" :completions ((:name "foo" :type-sig (() "String") :type-id 2660) (:name "finalize" :type-sig ((()) "Unit") :type-id 12 :is-callable t)))) 91)
-      if(swankCompletions) # Sometimes not, (:return (:ok (:prefix "sdf")) 5)
-        translate = (c) -> # (:return (:ok (:prefix "baz" :completions ((:name "baz" :type-sig (() "Int") :type-id 1)))) 4)
-          typeSig = c[':type-sig']
-          formattedSignature = formatCompletionsSignature(typeSig[0])
-          typeId = c[":type-id"]
-          log("Formatted params: " + formattedSignature)
-          {leftLabel: typeSig[1], snippet: "#{c[':name']}(#{formattedSignature})"}
+      if(completions)
+        translate = (c) ->
+          typeSig = c.typeSig
+          formattedSignature = formatCompletionsSignature(typeSig.sections[0]) # FIXME!
+          {leftLabel: c.typeSig.result, snippet: "#{c.name}(#{formattedSignature})"}
 
-        completions = (translate c for c in swankCompletions)
+        autocompletions = (translate c for c in completions)
         ### Autocomplete + :
         suggestion =
           text: 'someText' # OR
@@ -133,16 +133,24 @@ class Client
           rightLabelHTML: '' # (optional)
           iconHTML: '' # (optional)
         ###
-        callback(completions)
+        callback(autocompletions)
     )
 
 
   typecheckBuffer: (b) =>
-    msg = {"typehint":"TypecheckFileReq","fileInfo":{"file":"#{b.getPath()}","contents":"#{JSON.stringify(b.getText())}"}}
+    msg =
+      typehint: "TypecheckFileReq"
+      fileInfo:
+        file: b.getPath()
+        contents: b.getText()
+
     @post(msg, (result) ->)
 
   typecheckFile: (b) =>
-    msg = {"typehint":"TypecheckFileReq","fileInfo":{"file":"#{b.getPath()}"}}
+    msg =
+      typehint: "TypecheckFileReq"
+      fileInfo:
+        file: b.getPath()
     @post(msg, (result) ->)
 
   # TODO: make it incremental if perf. issue. Now this requests the whole thing every time
@@ -185,7 +193,6 @@ class Client
     )
     []
 
-    #(:return (:ok (:file "/Users/viktor/dev/projects/ensime-test-project/src/main/scala/Foo.scala" :syms ((param 305 306) (param 309 310) (valField 319 331)))) 3)
 
 
 symbols = ["ObjectSymbol"

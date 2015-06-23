@@ -134,8 +134,11 @@ classpathFileName = ->
 
 # Check that we have a classpath that is newer than atom ensime package
 classpathFileOk = (cpF) ->
-  cpFStats = fs.statSync(cpF)
-  cpFStats.isFile && cpFStats.ctime > fs.statSync(packageDir).mtime
+  if not fs.existsSync(cpF)
+    false
+  else
+    cpFStats = fs.statSync(cpF)
+    cpFStats.isFile && cpFStats.ctime > fs.statSync(packageDir).mtime
 
 
 startEnsimeServer = (pidCallback) ->

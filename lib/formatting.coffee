@@ -24,24 +24,27 @@ formatParam = (param) ->
   "#{param[0]}: #{result}"
 
 formatParamSection = (paramSection) ->
-  p = (formatParam(param) for param in paramSection[":params"])
+  p = (formatParam(param) for param in paramSection.params)
   p.join(", ")
 
 formatParamSections = (paramSections) ->
   sections = (formatParamSection(paramSection) for paramSection in paramSections)
   "(" + sections.join(")(") + ")"
 
+
+
+
 # For hover
 formatType = (theType) ->
-  if(theType[":arrow-type"])
-    formatParamSections(theType[":param-sections"]) + ": " + formatType(theType[":result-type"])
-  else
-    typeArgs = theType[":type-args"]
-    if not typeArgs
-      theType[":full-name"]
+  if(theType.typehint == "ArrowTypeInfo")
+    formatParamSections(theType.paramSections) + ": " + formatType(theType.resultType)
+  else if(theType.typehint == "BasicTypeInfo")
+    typeArgs = theType.typeArgs
+    if not typeArgs || typeArgs.length == 0
+      theType.fullName
     else
       formattedTypeArgs = (formatType(typeArg) for typeArg in typeArgs).join(", ")
-      theType[":full-name"] + "[#{formattedTypeArgs}]"
+      theType.fullName + "[#{formattedTypeArgs}]"
 
 module.exports = {
   formatCompletionsSignature,
