@@ -1,8 +1,8 @@
 {Subscriber} = require 'emissary'
-{TooltipView} = require './tooltip-view'
+{TooltipView} = require '../views/tooltip-view'
 $ = require 'jquery'
-{pixelPositionFromMouseEvent, getElementsByClass} = require './utils'
-{formatType} = require './formatting'
+{pixelPositionFromMouseEvent, getElementsByClass} = require '../utils'
+{formatType} = require '../formatting'
 
 class ShowTypes
   constructor: (@editor, @client) ->
@@ -37,12 +37,12 @@ class ShowTypes
     return if pixelPt.left >= nextCharPixelPt.left
 
     # find out show position
-    offset = @editor.getLineHeightInPixels() * 0.7
+    rectOffset = @editor.getLineHeightInPixels() * 0.7
     tooltipRect =
       left: e.clientX
       right: e.clientX
-      top: e.clientY - offset
-      bottom: e.clientY + offset
+      top: e.clientY - rectOffset
+      bottom: e.clientY + rectOffset
 
     # create tooltip with pending
     @exprTypeTooltip = new TooltipView(tooltipRect)
@@ -51,9 +51,13 @@ class ShowTypes
     textBuffer = @editor.getBuffer()
     offset = textBuffer.characterIndexForPosition(bufferPt)
 
-    @client.post("(swank:type-at-point \"#{@editor.getPath()}\" #{offset})", (msg) =>
+
+    req = """{"typehint":"TypeAtPointReq","file":"#{@editor.getPath()}","range":{"from":#{offset},"to":#{offset}}}"""
+
+    @client.postString(req, (msg) =>
       # (:return (:ok (:arrow-type nil :name "Ingredient" :type-id 3 :decl-as class :full-name "se.kostbevakningen.model.record.Ingredient" :type-args nil :members nil :pos (:type offset :file "/Users/viktor/dev/projects/kostbevakningen/src/main/scala/se/kostbevakningen/model/record/Ingredient.scala" :offset 545) :outer-type-id nil)) 3)
-      okMsg = msg[":ok"]
+
+
       @exprTypeTooltip?.updateText(formatType(okMsg))
 
     )

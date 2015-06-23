@@ -1,42 +1,36 @@
 net = require('net')
-{SwankParser, buildMessage} = require './swank-protocol'
-{car, cdr, fromLisp} = require './lisp'
-{sexpToJObject} = require './swank-extras'
 {log} = require './utils'
 {formatCompletionsSignature} = require './formatting'
+Swank = require './lisp/swank-protocol'
+_ = require 'lodash'
 
 module.exports =
-class SwankClient
+class Client
   constructor: (port, generalMsgHandler) ->
     @ensimeMessageCounter = 1
     @callbackMap = {}
 
-    @parser = new SwankParser( (msg) =>
-      #console.log("Received from Ensime server: #{msg}")
-      head = car(msg)
-      headStr = head.toString()
 
+
+    @parser = new Swank.SwankParser( (env) =>
+      console.log("Received from Ensime server: #{env}")
+#      "{"msg":{"implementation":{"name":"ENSIME"},"version":"0.8.15"},"callId":1}"
+      json = JSON.parse(env)
+      callId = json.callId
       # If :return - lookup in map, otherwise use some general function for handling general msgs
-      if(headStr == ":return")
-        # TODO:
-        # callback from map using message counter
-        returned = cdr(msg)
-        answer = car(returned)
-        msgCounter = parseInt(car(cdr(returned)))
-        #console.log("return msg for #{msgCounter}: #{answer}")
-
+      if(callId)
         try
-          @callbackMap[msgCounter](sexpToJObject(answer))
+          @callbackMap[callId](json.msg)
         catch error
           console.log("error in callback: #{error}")
         finally
-          delete @callbackMap[msgCounter]
+          delete @callbackMap[callId]
 
       else
-        generalMsgHandler(msg) # We let swank leak for now because I don't really know how (:clear-scala-notes) should
+        generalMsgHandler(json) # We let swank leak for now because I don't really know how (:clear-scala-notes) should
         # be translated into json. So unfortunately direct deps from main to car/cdr and such.
-
     )
+
     @openSocket(port)
 
   destroy: ->
@@ -67,21 +61,16 @@ class SwankClient
       console.log("Ensime server timeout event")
     )
 
-  # Public:
-  post: (msg, callback) =>
-    swankMsg = buildMessage("(:swank-rpc #{msg} #{@ensimeMessageCounter})")
+  postString: (msg, callback) =>
+    swankMsg = Swank.buildMessage """{"req": #{msg}, "callId": #{@ensimeMessageCounter}}"""
     @callbackMap[@ensimeMessageCounter++] = callback
+    log("socket messages: " + swankMsg)
     @socket.write(swankMsg)
 
+  # Public:
+  post: (msg, callback) ->
+    @postString(JSON.stringify(msg), callback)
 
-
-
-# 15:48:18.030 [Thread-10] INFO  o.e.s.protocol.swank.SwankProtocol - Received msg: (:swank-rpc (swank:type-at-point "/Users/viktor/dev/projects/ensime-test-project/src/main/scala/Foo.scala" 368) 8)
-# 15:48:18.037 [ENSIME-akka.actor.default-dispatcher-3] INFO  o.e.s.protocol.swank.SwankProtocol - Writing: (:return (:ok (:arrow-type t :name "[T](it: => T)(implicit computer: net.liftweb.util.CanBind[T])net.liftweb.util.CssSel" :type-id 5 :result-type (:arrow-type nil :name "CssSel" :type-id 6 :decl-as trait :full-name "net.liftweb.util.CssSel" :type-args nil :members nil :pos nil :outer-type-id nil) :param-sections ((:params (("it" (:arrow-type nil :name "<byname>" :type-id 2 :decl-as class :full-name "scala.<byname>" :type-args ((:arrow-type nil :name "T" :type-id 3 :decl-as nil :full-name "net.liftweb.util.T...
-# 15:48:20.255 [Thread-10] INFO  o.e.s.protocol.swank.SwankProtocol - Received msg: (:swank-rpc (swank:inspect-type-at-point "/Users/viktor/dev/projects/ensime-test-project/src/main/scala/Foo.scala" 368) 9)
-# 15:48:20.616 [ENSIME-akka.actor.default-dispatcher-3] INFO  o.e.s.protocol.swank.SwankProtocol - Writing: (:return (:ok (:type (:arrow-type t :name "[T](it: => T)(implicit computer: net.liftweb.util.CanBind[T])net.liftweb.util.CssSel" :type-id 5 :result-type (:arrow-type nil :name "CssSel" :type-id 6 :decl-as trait :full-name "net.liftweb.util.CssSel" :type-args nil :members nil :pos nil :outer-type-id nil) :param-sections ((:params (("it" (:arrow-type nil :name "<byname>" :type-id 2 :decl-as class :full-name "scala.<byname>" :type-args ((:arrow-type nil :name "T" :type-id 3 :decl-as nil :full-name "net.liftweb...
-
-#(:return (:ok (:name "#>" :local-name "#>" :decl-pos nil :type (:arrow-type t :name "[T](it: => T)(implicit computer: net.liftweb.util.CanBind[T])net.liftweb.util.CssSel" :type-id 6 :result-type (:arrow-type nil :name "CssSel" :type-id 7 :decl-as trait :full-name "net.liftweb.util.CssSel" :type-args nil :members nil :pos nil :outer-type-id nil) :param-sections ((:params (("it" (:arrow-type nil :name "<byname>" :type-id 3 :decl-as class :full-name "scala.<byname>" :type-args ((:arrow-type nil :name "T" :type...
 
 
   goToTypeAtPoint: (textBuffer, bufferPosition) =>
@@ -147,15 +136,14 @@ class SwankClient
         callback(completions)
     )
 
+
   typecheckBuffer: (b) =>
-    swankMsg = "(swank:typecheck-file (:file \"#{b.getPath()}\" :contents #{JSON.stringify(b.getText())}))"
-    log("swankMsg: #{swankMsg}")
-    @post(swankMsg, (result) ->)
+    msg = {"typehint":"TypecheckFileReq","fileInfo":{"file":"#{b.getPath()}","contents":"#{JSON.stringify(b.getText())}"}}
+    @post(msg, (result) ->)
 
   typecheckFile: (b) =>
-    swankMsg = "(swank:typecheck-file (:file \"#{b.getPath()}\"))"
-    log("swankMsg: #{swankMsg}")
-    @post(swankMsg, (result) ->)
+    msg = {"typehint":"TypecheckFileReq","fileInfo":{"file":"#{b.getPath()}"}}
+    @post(msg, (result) ->)
 
   # TODO: make it incremental if perf. issue. Now this requests the whole thing every time
   # Probably need to branch out code-links and make something more custom with control over life cycle.
@@ -166,11 +154,19 @@ class SwankClient
     range = b.getRange()
     startO = b.characterIndexForPosition(range.start)
     endO = b.characterIndexForPosition(range.end)
-    symbols = "object class trait package constructor importedName typeParam param varField valField operator var val functionCall"
-    swankMsg = "(swank:symbol-designations (:file \"#{b.getPath()}\" :contents #{JSON.stringify(b.getText())}) #{startO} #{endO} (#{symbols}))"
-    @post(swankMsg, (result) ->
-      log("symbol-designations: " + result)
-      syms = result[":ok"][":syms"]
+
+    # TODO: contents:
+    msg = {
+      "typehint":"SymbolDesignationsReq"
+      "requestedTypes": symbolTypehints
+      "file": b.getPath()
+      "start": startO
+      "end": endO
+    }
+
+    @post(msg, (result) ->
+      syms = result.syms
+
       decorate = (sym) ->
         startPos = b.positionForCharacterIndex(parseInt(sym[1]))
         endPos = b.positionForCharacterIndex(parseInt(sym[2]))
@@ -190,3 +186,21 @@ class SwankClient
     []
 
     #(:return (:ok (:file "/Users/viktor/dev/projects/ensime-test-project/src/main/scala/Foo.scala" :syms ((param 305 306) (param 309 310) (valField 319 331)))) 3)
+
+
+symbols = ["ObjectSymbol"
+,"ClassSymbol"
+,"TraitSymbol"
+,"PackageSymbol"
+,"ConstructorSymbol"
+,"ImportedNameSymbol"
+,"TypeParamSymbol"
+,"ParamSymbol"
+,"VarFieldSymbol"
+,"ValFieldSymbol"
+,"OperatorFieldSymbol"
+,"VarSymbol"
+,"ValSymbol"
+,"FunctionCallSymbol"]
+
+symbolTypehints = _.map(symbols, (symbol) -> {"typehint": "#{symbol}"})

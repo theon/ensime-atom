@@ -3,13 +3,12 @@ exec = require('child_process').exec
 fs = require 'fs'
 path = require('path')
 {Subscriber} = require 'emissary'
-SwankClient = require './swank-client'
-StatusbarView = require './statusbar-view'
+Client = require './client'
+StatusbarView = require './views/statusbar-view'
 {CompositeDisposable} = require 'atom'
-{car, cdr, fromLisp} = require './lisp'
 EditorControl = require './editor-control'
-ShowTypes = require './show-types'
 {updateEnsimeServer, startEnsimeServer, classpathFileName} = require './ensime-startup'
+ShowTypes = require './features/show-types'
 TypeCheckingFeature = require('./features/typechecking')
 {log, modalMsg, isScalaSource, projectPath} = require './utils'
 
@@ -19,9 +18,9 @@ portFile = ->
     projectPath() + '/.ensime_cache/port'
 
 
-createSwankClient = (portFileLoc, generalHandler) ->
+createClient = (portFileLoc, generalHandler) ->
   port = fs.readFileSync(portFileLoc).toString()
-  new SwankClient(port, generalHandler)
+  new Client(port, generalHandler)
 
 
 module.exports = Ensime =
@@ -122,29 +121,29 @@ module.exports = Ensime =
       modalMsg("Already running", "Ensime server process already running")
 
   generalHandler: (msg) ->
-    head = car(msg)
-    tail = cdr(msg)
-    headStr = head.toString()
-    console.log("this: " + this)
 
-    if(headStr == ':compiler-ready')
-      @statusbarView.setText('compiler ready…')
+    typehint = msg.typehint
 
-    else if(headStr == ':full-typecheck-finished')
+    if(typehint == 'AnalyzerReadyEvent')
+      @statusbarView.setText('Analyzer ready!')
+
+    else if(typehint == 'FullTypeCheckCompleteEvent')
       @statusbarView.setText('Full typecheck finished!')
 
-    else if(headStr == ':indexer-ready')
-      @statusbarView.setText('indexer ready')
+    else if(typehint == 'IndexerReadyEvent')
+      @statusbarView.setText('Indexer ready!')
 
-    else if(headStr.startsWith(':background-message'))
-      @statusbarView.setText("#{tail}")
+    else if(typehint == 'CompilerRestartedEvent')
+      @statusbarView.setText('Compiler restarted!')
 
-    else if(headStr == ':scala-notes')
-      @typechecking.addScalaNotes(tail)
-
-    else if(headStr == ':clear-all-scala-notes')
+    else if(typehint == 'ClearAllScalaNotesEvent')
       @typechecking.clearScalaNotes()
 
+    else if(typehint == 'NewScalaNotesEvent')
+      @typechecking.addScalaNotes(msg)
+
+    else if(typehint.startsWith('SendBackgroundMessageEvent'))
+      @statusbarView.setText(msg.detail)
 
 
 
@@ -153,13 +152,13 @@ module.exports = Ensime =
 
     initClient = =>
 
-      @client = createSwankClient(portFile(), (msg) => @generalHandler(msg) )
+      @client = createClient(portFile(), (msg) => @generalHandler(msg) )
 
 
       @statusbarView = new StatusbarView()
       @statusbarView.init()
 
-      @client.post("(swank:init-project)", (msg) -> )
+      @client.post({"typehint":"ConnectionInfoReq"}, (msg) -> )
 
       @controlSubscription = atom.workspace.observeTextEditors (editor) =>
         if not @editorControllers.get(editor) && isScalaSource(editor)
@@ -225,7 +224,7 @@ module.exports = Ensime =
 
 
   typecheckAll: ->
-    @client.post("(swank:typecheck-all)", (msg) ->)
+    @client.post( {"typehint": "TypecheckAllReq"}, (msg) ->)
 
   # typechecks currently open file
   typecheckBuffer: ->

@@ -1,5 +1,4 @@
 {MessagePanelView, LineMessageView} = require 'atom-message-panel'
-{sexpToJObject} = require '../swank-extras'
 _ = require 'lodash'
 {log, isScalaSource} = require '../utils'
 {CompositeDisposable} = require 'atom'
