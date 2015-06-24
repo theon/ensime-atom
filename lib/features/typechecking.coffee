@@ -39,9 +39,9 @@ class TypeChecking
           line: note.line
           character: note.col
           message: note.msg
-          className: switch note.severity
-            when "error" then "highlight-error"
-            when "warning" then "highlight-warning"
+          className: switch note.severity.typehint
+            when "NoteError" then "highlight-error"
+            when "NoteWarning" then "highlight-warning"
             else ""
 
     for file, notes of @notesByFile
