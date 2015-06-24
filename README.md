@@ -1,5 +1,7 @@
 # Atom Ensime
 
+[![Join the chat at https://gitter.im/ensime/ensime-atom](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/ensime/ensime-atom?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
 This is a work in progress to try to use [Ensime](https://github.com/ensime/) functionality in [Atom](https://atom.io)
 Way early still and will most likely be very buggy. Or maybe not start at all. The bootstrapping of the Ensime server might be an issue. Please let me know if you have any troubles with the few features implemented. I guess most problems will probably be related to bootstrapping of the Ensime server.
 
