@@ -27,7 +27,7 @@ class EditorControl
 
       # typecheck file on save
       if atom.config.get('Ensime.typecheckWhen') in ['save', 'typing']
-        @client.typecheckFile(@editor.getBuffer())
+        @client.typecheckBuffer(@editor.getBuffer())
 
 
 

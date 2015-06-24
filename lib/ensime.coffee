@@ -1,16 +1,15 @@
 net = require('net')
 exec = require('child_process').exec
 fs = require 'fs'
+path = require('path')
 {Subscriber} = require 'emissary'
-SwankClient = require './swank-client'
-StatusbarView = require './statusbar-view'
+Client = require './client'
+StatusbarView = require './views/statusbar-view'
 {CompositeDisposable} = require 'atom'
-{car, cdr, fromLisp} = require './lisp'
-{sexpToJObject} = require './swank-extras'
 EditorControl = require './editor-control'
-ShowTypes = require './show-types'
 {updateEnsimeServer, startEnsimeServer, classpathFileName} = require './ensime-startup'
-{MessagePanelView, LineMessageView} = require 'atom-message-panel'
+ShowTypes = require './features/show-types'
+TypeCheckingFeature = require('./features/typechecking')
 {log, modalMsg, isScalaSource, projectPath} = require './utils'
 
 
@@ -19,11 +18,9 @@ portFile = ->
     projectPath() + '/.ensime_cache/port'
 
 
-createSwankClient = (portFileLoc, generalHandler) ->
+createClient = (portFileLoc, generalHandler) ->
   port = fs.readFileSync(portFileLoc).toString()
-  new SwankClient(port, generalHandler)
-
-
+  new Client(port, generalHandler)
 
 
 module.exports = Ensime =
@@ -85,12 +82,22 @@ module.exports = Ensime =
     @subscriptions.add atom.commands.add 'atom-workspace', "ensime:stop", => @stopEnsime()
 
     @subscriptions.add atom.commands.add 'atom-workspace', "ensime:typecheck-all", => @typecheckAll()
+    @subscriptions.add atom.commands.add 'atom-workspace', "ensime:unload-all", => @unloadAll()
     @subscriptions.add atom.commands.add 'atom-workspace', "ensime:typecheck-file", => @typecheckFile()
     @subscriptions.add atom.commands.add 'atom-workspace', "ensime:typecheck-buffer", => @typecheckBuffer()
 
     @subscriptions.add atom.commands.add 'atom-workspace', "ensime:go-to-definition", => @goToDefinitionOfCursor()
 
-
+    # https://discuss.atom.io/t/ok-to-use-grammar-cson-for-just-file-assoc/17801/11
+    Promise.resolve(
+      atom.packages.isPackageLoaded('language-scala') && atom.packages.activatePackage('language-scala')
+    ).then (languageScalaPkg) ->
+      if languageScalaPkg
+        # language-scala is loaded and activated
+      else
+        # language-scala is not loaded
+        grammar = atom.packages.resolvePackagePath('Ensime') + path.sep + 'grammars-hidden' + path.sep + 'scala.cson'
+        atom.grammars.loadGrammar grammar
 
   deactivate: ->
     @subscriptions.dispose()
@@ -115,48 +122,45 @@ module.exports = Ensime =
       modalMsg("Already running", "Ensime server process already running")
 
   generalHandler: (msg) ->
-    head = car(msg)
-    tail = cdr(msg)
-    headStr = head.toString()
-    console.log("this: " + this)
 
-    if(headStr == ':compiler-ready')
-      @statusbarView.setText('compiler ready…')
+    typehint = msg.typehint
 
-    else if(headStr == ':full-typecheck-finished')
+    if(typehint == 'AnalyzerReadyEvent')
+      @statusbarView.setText('Analyzer ready!')
+
+    else if(typehint == 'FullTypeCheckCompleteEvent')
       @statusbarView.setText('Full typecheck finished!')
 
-    else if(headStr == ':indexer-ready')
-      @statusbarView.setText('indexer ready')
+    else if(typehint == 'IndexerReadyEvent')
+      @statusbarView.setText('Indexer ready!')
 
-    else if(headStr == ':clear-all-java-notes')
-      @statusbarView.setText('feature todo: clear all java notes')
+    else if(typehint == 'CompilerRestartedEvent')
+      @statusbarView.setText('Compiler restarted!')
 
-    else if(headStr == ':clear-all-scala-notes')
-      log(":clear-all-scala-notes received")
-      @messages.clear()
+    else if(typehint == 'ClearAllScalaNotesEvent')
+      @typechecking.clearScalaNotes()
 
-    else if(headStr.startsWith(':background-message'))
-      @statusbarView.setText("#{tail}")
+    else if(typehint == 'NewScalaNotesEvent')
+      @typechecking.addScalaNotes(msg)
 
-    else if(headStr == ':scala-notes')
-      @handleScalaNotes(tail)
+    else if(typehint.startsWith('SendBackgroundMessageEvent'))
+      @statusbarView.setText(msg.detail)
+
 
 
   initProject: ->
+    @typechecking = new TypeCheckingFeature()
+
     initClient = =>
-      @client = createSwankClient(portFile(), (msg) => @generalHandler(msg) )
+
+      @client = createClient(portFile(), (msg) => @generalHandler(msg) )
+
 
       @statusbarView = new StatusbarView()
       @statusbarView.init()
 
-      @messages = new MessagePanelView
-          title: 'Ensime'
-      @messages.attach()
+      @client.post({"typehint":"ConnectionInfoReq"}, (msg) -> )
 
-      @client.post("(swank:init-project)", (msg) -> )
-
-      # TODO: Separate each feature in separate coffeescript class and figure out a cleaner way of cleanup
       @controlSubscription = atom.workspace.observeTextEditors (editor) =>
         if not @editorControllers.get(editor) && isScalaSource(editor)
           @editorControllers.set(editor, new EditorControl(editor, @client))
@@ -200,9 +204,7 @@ module.exports = Ensime =
     @ensimeServerPid?.kill()
     @ensimeServerPid = null
 
-    @messages?.clear()
-    @messages?.close()
-    @messages = null #GC now?
+
 
     @statusbarView?.destroy()
     @statusbarView = null
@@ -212,12 +214,21 @@ module.exports = Ensime =
     @client?.destroy()
     @client = null
 
+
+    @typechecking?.destroy()
+    @typechecking = null
+
+
+
     #atom.packages.deactivatePackage('Ensime')
 
 
 
   typecheckAll: ->
-    @client.post("(swank:typecheck-all)", (msg) ->)
+    @client.post( {"typehint": "TypecheckAllReq"}, (msg) ->)
+
+  unloadAll: ->
+    @client.post( {"typehint": "UnloadAllReq"}, (msg) ->)
 
   # typechecks currently open file
   typecheckBuffer: ->
@@ -234,26 +245,7 @@ module.exports = Ensime =
     pos = editor.getCursorBufferPosition()
     @client.goToTypeAtPoint(textBuffer, pos)
 
-  handleScalaNotes: (msg) ->
-    array = sexpToJObject msg
-    result = array[0]
-    notes = result[':notes']
 
-
-    addNote = (note) =>
-      file = note[':file']
-      if(not file.includes('dep-src'))
-        @messages.add new LineMessageView
-            file: file
-            line: note[':line']
-            character: note[':col']
-            message: note[':msg']
-            className: switch note[':severity']
-              when "error" then "highlight-error"
-              when "warning" then "highlight-warning"
-              else ""
-    @messages.attach()
-    addNote note for note in notes
 
   provideLinks: ->
     Processor = require('./provide-links-processor')

@@ -1,11 +1,12 @@
 # Download and startup of ensime server
 fs = require('fs')
 path = require('path')
-{sexpToJObject} = require('./swank-extras')
 {exec, spawn} = require('child_process')
-lisp = require('./lisp')
 {log, modalMsg, projectPath} = require('./utils')
 EnsimeServerUpdateLogView = require('./views/ensime-server-update-log-view')
+lisp = require './lisp/lisp'
+{sexpToJObject} = require './lisp/swank-extras'
+
 createSbtClasspathBuild = (scalaVersion, ensimeServerVersion, classpathFile) ->
   """
   import sbt._
@@ -130,6 +131,16 @@ classpathFileName = ->
   {s, e} = versions()
   classpathFile(s, e)
 
+
+# Check that we have a classpath that is newer than atom ensime package
+classpathFileOk = (cpF) ->
+  if not fs.existsSync(cpF)
+    false
+  else
+    cpFStats = fs.statSync(cpF)
+    cpFStats.isFile && cpFStats.ctime > fs.statSync(packageDir).mtime
+
+
 startEnsimeServer = (pidCallback) ->
   if not fs.existsSync(ensimeCache())
     fs.mkdirSync(ensimeCache())
@@ -141,7 +152,7 @@ startEnsimeServer = (pidCallback) ->
   cpF = classpathFile(scalaVersion, ensimeServerVersion)
   log("classpathfile name: #{cpF}")
 
-  if(not fs.existsSync(cpF))
+  if(not classpathFileOk(cpF))
     updateEnsimeServer(scalaVersion, ensimeServerVersion) # TODO async so wait for portfile
 
 
@@ -160,7 +171,7 @@ startEnsimeServer = (pidCallback) ->
       javaCmd = "#{javaHome}bin/java"
       ensimeServerFlags = "#{atom.config.get('Ensime.ensimeServerFlags')}"
       ensimeConfigFile = projectPath() + '/.ensime'
-      args = ["-classpath", "#{classpath}", "-Densime.config=#{ensimeConfigFile}"]
+      args = ["-classpath", "#{classpath}", "-Densime.config=#{ensimeConfigFile}", "-Densime.protocol=jerk"]
       if ensimeServerFlags.length > 0
          args.push ensimeServerFlags  ## Weird, but extra " " broke everyting
 
