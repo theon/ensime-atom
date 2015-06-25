@@ -86,9 +86,7 @@ updateEnsimeServerManually = ->
     updateEnsimeServer(scalaVersion, ensimeServerVersion)
 
 
-updateEnsimeServer = (scalaVersion, ensimeServerVersion) ->
-
-  #TODO: cleanup!
+updateEnsimeServer = (sbtCmd, scalaVersion, ensimeServerVersion) ->
   @serverUpdateLog = new EnsimeServerUpdateLogView()
 
   pane = atom.workspace.getActivePane()
@@ -105,29 +103,13 @@ updateEnsimeServer = (scalaVersion, ensimeServerVersion) ->
 
   fs.writeFileSync(tempdir + path.sep + 'project' + path.sep + 'build.properties', 'sbt.version=0.13.8\n')
 
-  sbtCmd = atom.config.get('Ensime.sbtExec')
-  if sbtCmd
-    updateServer(sbtCmd)
-  else
-    dialog = remote.require('dialog')
-    dialog.showOpenDialog({title: "Sorry, but we need you to point out your SBT executive", properties:['openFile']}, (filename) =>
-        sbtCmd = filename
-        atom.config.set('Ensime.sbtExec', filename)
-        updateServer(sbtCmd)
-      )
-
-  updateServer = (cmd) =>
-    console.log("sbt: " + cmd)
-
-    # run sbt "saveClasspath" "clean"
-    pid = spawn("#{cmd}", ['-Dsbt.log.noformat=true', 'saveClasspath', 'clean'], {cwd: tempdir})
-    pid.stdout.on 'data', (chunk) -> log(chunk.toString('utf8'))
-    pid.stderr.on 'data', (chunk) -> log('ensime startup exec error: ' + chunk.toString('utf8'))
-
-    pid.stdout.on 'data', (chunk) => @serverUpdateLog.addRow(chunk.toString('utf8'))
-    pid.stderr.on 'data', (chunk) => @serverUpdateLog.addRow('ensime startup exec error: ' + chunk.toString('utf8'))
-
-    pid.stdin.end()
+  # run sbt "saveClasspath" "clean"
+  pid = spawn("#{sbtCmd}", ['-Dsbt.log.noformat=true', 'saveClasspath', 'clean'], {cwd: tempdir})
+  pid.stdout.on 'data', (chunk) -> log(chunk.toString('utf8'))
+  pid.stderr.on 'data', (chunk) -> log(chunk.toString('utf8'))
+  pid.stdout.on 'data', (chunk) => @serverUpdateLog.addRow(chunk.toString('utf8'))
+  pid.stderr.on 'data', (chunk) => @serverUpdateLog.addRow(chunk.toString('utf8'))
+  pid.stdin.end()
 
 
 versions = ->
@@ -141,50 +123,58 @@ classpathFileName = ->
   classpathFile(s, e)
 
 
-# Check that we have a classpath that is newer than atom ensime package, otherwise delete it
+# Check that we have a classpath that is newer than atom ensime package.json (updated on release), otherwise delete it
 classpathFileOk = (cpF) ->
   if not fs.existsSync(cpF)
     false
   else
     cpFStats = fs.statSync(cpF)
-    fine = cpFStats.isFile && cpFStats.ctime > fs.statSync(packageDir).mtime
+    fine = cpFStats.isFile && cpFStats.ctime > fs.statSync(packageDir + path.sep + 'package.json').mtime
     if not fine
       fs.unlinkSync(cpF)
     fine
 
 
-startEnsimeServer = (pidCallback) ->
+withJavaHome = (callback) =>
   javaHome = atom.config.get('Ensime.JAVA_HOME')
   if javaHome
-    startWithJavaHome(javaHome)
+    callback(javaHome)
   else
     if process.env.JAVA_HOME
       javaHome = process.env.JAVA_HOME
       atom.config.set('Ensime.JAVA_HOME', javaHome)
-      startWithJavaHome(javaHome)
+      callback(javaHome)
     else
       dialog = remote.require('dialog')
-      dialog.showOpenDialog({title: "So sorry, but please select your JAVA_HOME", properties:['openDirectory']}, (filename) =>
-          javaHome = filename
-          atom.config.set('Ensime.JAVA_HOME', filename)
-          startWithJavaHome(javaHome)
+      dialog.showOpenDialog({title: "So sorry, but please select your JAVA_HOME", properties:['openDirectory']}, (filenames) =>
+          javaHome = filenames[0]
+          atom.config.set('Ensime.JAVA_HOME', javaHome)
+          callback(javaHome)
         )
 
+withSbt = (callback) =>
+  sbtCmd = atom.config.get('Ensime.sbtExec')
+  if sbtCmd
+    callback(sbtCmd)
+  else
+    dialog = remote.require('dialog')
+    dialog.showOpenDialog({title: "Sorry, but we need you to point out your SBT executive", properties:['openFile']}, (filenames) =>
+        sbtCmd = filenames[0]
+        atom.config.set('Ensime.sbtExec', sbtCmd)
+        callback(sbtCmd)
+      )
 
-  startWithJavaHome = (javaHome) ->
+
+startEnsimeServer = (pidCallback) ->
+  withJavaHome (javaHome) =>
     if not fs.existsSync(ensimeCache())
       fs.mkdirSync(ensimeCache())
 
     {scalaVersion, ensimeServerVersion} = versions()
 
-
     toolsJar = "#{javaHome}#{path.sep}lib#{path.sep}tools.jar"
     cpF = classpathFile(scalaVersion, ensimeServerVersion)
     log("classpathfile name: #{cpF}")
-
-    if(not classpathFileOk(cpF))
-      updateEnsimeServer(scalaVersion, ensimeServerVersion) # TODO async so wait for portfile
-
 
     checkForServerCP = (trysLeft) =>
       log("check for server classpath file #{cpF}. trys left: " + trysLeft)
@@ -219,7 +209,15 @@ startEnsimeServer = (pidCallback) ->
         pid.stdin.end()
         pidCallback(pid)
 
-    checkForServerCP(20) # 40 sec should be enough?
+
+    if(not classpathFileOk(cpF))
+      withSbt (sbtCmd) =>
+        updateEnsimeServer(sbtCmd, scalaVersion, ensimeServerVersion)
+        checkForServerCP(20) # 40 sec should be enough?
+    else
+      checkForServerCP(20) # 40 sec should be enough?
+
+
 
 
 
