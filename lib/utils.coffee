@@ -1,4 +1,5 @@
 path = require 'path'
+fs = require 'fs'
 
 isScalaSource = (editor) ->
   buffer = editor.getBuffer()
@@ -35,7 +36,7 @@ modalMsg = (title, msg) ->
       Ok: ->
 
 
-projectPath = -> atom.project.getPaths()[0]
+projectPath = -> (p for p in atom.project.getPaths() when fs.existsSync(p+"/.ensime"))[0]
 
 module.exports = {
   isScalaSource,
