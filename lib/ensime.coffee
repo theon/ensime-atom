@@ -30,43 +30,52 @@ module.exports = Ensime =
     ensimeServerVersion: {
       description: 'Version of Ensime server',
       type: 'string',
-      default: "0.9.10-SNAPSHOT"
+      default: "0.9.10-SNAPSHOT",
+      order: 1
     },
     sbtExec: {
       description: "Full path to sbt. 'which sbt'",
       type: 'string',
-      default: "/usr/local/bin/sbt"
+      default: '',
+      order: 2
     },
     JAVA_HOME: {
       description: 'path to JAVA_HOME',
       type: 'string',
-      default: '/Library/Java/JavaVirtualMachines/jdk1.8.0_05.jdk/Contents/Home/'
+      default: '',
+      order: 3
     },
     ensimeServerFlags: {
       description: 'java flags for ensime server startup',
       type: 'string',
-      default: ''
+      default: '',
+      order: 4,
     },
     devMode: {
       description: 'Turn on for extra console logging during development',
       type: 'boolean',
-      default: false
+      default: false,
+      order: 5,
     },
     runServerDetached: {
       description: "Run the Ensime server as a detached process. Useful while developing",
       type: 'boolean',
-      default: false
+      default: false,
+      order: 6
     }
     typecheckWhen: {
       description: "When to typecheck",
       type: 'string',
       default: 'typing',
-      enum: ['command', 'save', 'typing']
+      enum: ['command', 'save', 'typing'],
+      order: 7
+
     }
     typecheckTypingDelay: {
       description: "Delay for typechecking while typing, in milliseconds. Too low might cause performance issues."
       type: 'integer'
-      default: '500'
+      default: '500',
+      order: 8
     }
   }
 
@@ -105,8 +114,6 @@ module.exports = Ensime =
     if not atom.config.get('Ensime.runServerDetached')
       @ensimeServerPid?.kill()
     @deleteControllers()
-
-  serialize: ->
 
   maybeStartEnsimeServer: ->
     if not @ensimeServerPid
