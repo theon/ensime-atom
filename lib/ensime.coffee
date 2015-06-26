@@ -87,7 +87,11 @@ module.exports = Ensime =
 
     # Need to have a started server and port file
     @subscriptions.add atom.commands.add 'atom-workspace', "ensime:update-ensime-server", => updateEnsimeServer()
-    @subscriptions.add atom.commands.add 'atom-workspace', "ensime:start", => @initProject()
+    @subscriptions.add atom.commands.add 'atom-workspace', "ensime:start", =>
+      if !projectPath()?
+        modalMsg("no valid Ensime project found (did you remember to generate a .ensime file?)")
+      else @initProject()
+
     @subscriptions.add atom.commands.add 'atom-workspace', "ensime:stop", => @stopEnsime()
 
     @subscriptions.add atom.commands.add 'atom-workspace', "ensime:typecheck-all", => @typecheckAll()
