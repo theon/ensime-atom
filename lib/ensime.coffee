@@ -39,43 +39,37 @@ module.exports = Ensime =
       default: '',
       order: 2
     },
-    JAVA_HOME: {
-      description: 'path to JAVA_HOME',
-      type: 'string',
-      default: '',
-      order: 3
-    },
     ensimeServerFlags: {
       description: 'java flags for ensime server startup',
       type: 'string',
       default: '',
-      order: 4,
+      order: 3,
     },
     devMode: {
       description: 'Turn on for extra console logging during development',
       type: 'boolean',
       default: false,
-      order: 5,
+      order: 4,
     },
     runServerDetached: {
       description: "Run the Ensime server as a detached process. Useful while developing",
       type: 'boolean',
       default: false,
-      order: 6
+      order: 5
     }
     typecheckWhen: {
       description: "When to typecheck",
       type: 'string',
       default: 'typing',
       enum: ['command', 'save', 'typing'],
-      order: 7
+      order: 6
 
     }
     typecheckTypingDelay: {
       description: "Delay for typechecking while typing, in milliseconds. Too low might cause performance issues."
       type: 'integer'
       default: '500',
-      order: 8
+      order: 7
     }
   }
 

@@ -16,8 +16,6 @@ Way early still and will most likely be very buggy. Or maybe not start at all. T
 - cmd-shift-P Ensime: Start.
 - Then you can use the features marked x below :)
 
-Note: Init project will start the server too, but need to check for portfile before
-
 ## Complementing packages:
 - [Project manager](https://github.com/danielbrodin/atom-project-manager) is really handy to keep track of projects.
 - Need plugin to navigate back to last cursor position when "code surfing". Maybe https://atom.io/packages/last-cursor-position
@@ -66,6 +64,7 @@ https://groups.google.com/forum/#!searchin/ensime/log/ensime/1dWUQwnFoyk/0O12KPj
 - [ ] Look how https://github.com/OmniSharp/omnisharp-atom/wiki makes autocomplete and linter install automatically
 - [ ] Check out https://github.com/OmniSharp/omnisharp-atom Seems we can learn a lot!
 - [ ] Create FRP stream for editors that features can use.
+- [ ] Rewrite core parts in scala.js, reuse msg classes from ensime and so forth. Make atom interface for scala.js.
 - [ ] ditch swank for jerk
 - [ ] Wait for analyzer ready msg - (:return (:abort 209 "Analyzer is not ready! Please wait.") 4)
 - [ ] Setting for autocomplete - "excludeLowerPriority"

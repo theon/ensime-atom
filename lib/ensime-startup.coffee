@@ -47,43 +47,55 @@ createSbtClasspathBuild = (scalaVersion, ensimeServerVersion, classpathFile) ->
   }
   """
 
+
+ensimeServerVersion = ->
+  atom.config.get('Ensime.ensimeServerVersion')
+
+
+readDotEnsime = (path) ->
+  raw = fs.readFileSync(path)
+  rows = raw.toString().split(/\r?\n/);
+  filtered = rows.filter (l) -> l.indexOf(';;') != 0
+  filtered.join('\n')
+
+
 packageDir = atom.packages.resolvePackagePath('Ensime')
-tempdir =  packageDir + "/ensime_update_"
+tempdir =  packageDir + path.sep + "ensime_update_"
 
 
-classpathFile = (scalaVersion, ensimeServerVersion) ->
+dotEnsimeToCPFileName = ->
+  withDotEnsime (scalaVersion, javaHome) ->
+    mkClasspathFileName(scalaVersion, ensimeServerVersion())
+
+
+mkClasspathFileName = (scalaVersion, ensimeServerVersion) ->
   atom.packages.resolvePackagePath('Ensime') + path.sep + "classpath_#{scalaVersion}_#{ensimeServerVersion}"
 
 
 ensimeCache = -> projectPath() + path.sep + '.ensime_cache'
 ensimeServerLogFile = -> ensimeCache() + path.sep + 'server.log'
 
-readDotEnsime = (path)-> # TODO: error handling
-  raw = fs.readFileSync(path) # TODO: ask as Emacs?
-  rows = raw.toString().split(/\r?\n/);
-  filtered = rows.filter (l) -> l.indexOf(';;') != 0
-  filtered.join('\n')
 
-scalaVersionOfProjectDotEnsime = (path) ->
+
+withDotEnsime = (callback) ->
+  dotEnsimePath = projectPath() + path.sep + '.ensime'
   # scala version from .ensime config file of project
-  dotEnsime = readDotEnsime(path)
+  dotEnsime = readDotEnsime(dotEnsimePath)
   dotEnsimeLisp = lisp.readFromString(dotEnsime)
   dotEnsimeJs = sexpToJObject(dotEnsimeLisp)
-  dotEnsimeJs[':scala-version']
-
-
-
-
+  scalaVersion = dotEnsimeJs[':scala-version']
+  javaHome = dotEnsimeJs[':java-home']
+  callback(scalaVersion, javaHome)
 
 
 updateEnsimeServerManually = ->
-  ensimeConfigFile = projectPath() + path.sep '.ensime'
-  scalaVersion = scalaVersionOfProjectDotEnsime(ensimeConfigFile)
-  ensimeServerVersion = atom.config.get('Ensime.ensimeServerVersion')
-  if not (projectPath() and fs.existsSync(ensimeConfigFile))
-    modalMsg('No .ensime found', "You need to have a project open with a .ensime in root.")
-  else
-    updateEnsimeServer(scalaVersion, ensimeServerVersion)
+  withDotEnsime (scalaVersion, javaHome) ->
+    if not projectPath()
+      modalMsg('No .ensime found', "You need to have a project open with a .ensime in root.")
+    else
+      withSbt (sbtCmd) ->
+        updateEnsimeServer(sbtCmd, scalaVersion, ensimeServerVersion())
+
 
 
 updateEnsimeServer = (sbtCmd, scalaVersion, ensimeServerVersion) ->
@@ -99,7 +111,7 @@ updateEnsimeServer = (sbtCmd, scalaVersion, ensimeServerVersion) ->
 
   # write out a build.sbt in this dir
   fs.writeFileSync(tempdir + path.sep + 'build.sbt', createSbtClasspathBuild(scalaVersion, ensimeServerVersion,
-    classpathFile(scalaVersion, ensimeServerVersion)))
+    mkClasspathFileName(scalaVersion, ensimeServerVersion)))
 
   fs.writeFileSync(tempdir + path.sep + 'project' + path.sep + 'build.properties', 'sbt.version=0.13.8\n')
 
@@ -110,17 +122,6 @@ updateEnsimeServer = (sbtCmd, scalaVersion, ensimeServerVersion) ->
   pid.stdout.on 'data', (chunk) => @serverUpdateLog.addRow(chunk.toString('utf8'))
   pid.stderr.on 'data', (chunk) => @serverUpdateLog.addRow(chunk.toString('utf8'))
   pid.stdin.end()
-
-
-versions = ->
-  ensimeConfigFile = projectPath() + path.sep + '.ensime'
-  scalaVersion = scalaVersionOfProjectDotEnsime(ensimeConfigFile)
-  ensimeServerVersion = atom.config.get('Ensime.ensimeServerVersion')
-  {scalaVersion: scalaVersion, ensimeServerVersion: ensimeServerVersion}
-
-classpathFileName = ->
-  {s, e} = versions()
-  classpathFile(s, e)
 
 
 # Check that we have a classpath that is newer than atom ensime package.json (updated on release), otherwise delete it
@@ -135,28 +136,12 @@ classpathFileOk = (cpF) ->
     fine
 
 
-withJavaHome = (callback) =>
-  javaHome = atom.config.get('Ensime.JAVA_HOME')
-  if javaHome
-    callback(javaHome)
-  else
-    if process.env.JAVA_HOME
-      javaHome = process.env.JAVA_HOME
-      atom.config.set('Ensime.JAVA_HOME', javaHome)
-      callback(javaHome)
-    else
-      dialog = remote.require('dialog')
-      dialog.showOpenDialog({title: "So sorry, but please select your JAVA_HOME", properties:['openDirectory']}, (filenames) =>
-          javaHome = filenames[0]
-          atom.config.set('Ensime.JAVA_HOME', javaHome)
-          callback(javaHome)
-        )
-
 withSbt = (callback) =>
   sbtCmd = atom.config.get('Ensime.sbtExec')
   if sbtCmd
     callback(sbtCmd)
   else
+    # TODO: try to check if on path, can we do this with fs?
     dialog = remote.require('dialog')
     dialog.showOpenDialog({title: "Sorry, but we need you to point out your SBT executive", properties:['openFile']}, (filenames) =>
         sbtCmd = filenames[0]
@@ -166,14 +151,12 @@ withSbt = (callback) =>
 
 
 startEnsimeServer = (pidCallback) ->
-  withJavaHome (javaHome) =>
+  withDotEnsime (scalaVersion, javaHome) =>
     if not fs.existsSync(ensimeCache())
       fs.mkdirSync(ensimeCache())
 
-    {scalaVersion, ensimeServerVersion} = versions()
-
     toolsJar = "#{javaHome}#{path.sep}lib#{path.sep}tools.jar"
-    cpF = classpathFile(scalaVersion, ensimeServerVersion)
+    cpF = mkClasspathFileName(scalaVersion, ensimeServerVersion())
     log("classpathfile name: #{cpF}")
 
     checkForServerCP = (trysLeft) =>
@@ -212,7 +195,7 @@ startEnsimeServer = (pidCallback) ->
 
     if(not classpathFileOk(cpF))
       withSbt (sbtCmd) =>
-        updateEnsimeServer(sbtCmd, scalaVersion, ensimeServerVersion)
+        updateEnsimeServer(sbtCmd, scalaVersion, ensimeServerVersion())
         checkForServerCP(20) # 40 sec should be enough?
     else
       checkForServerCP(20) # 40 sec should be enough?
@@ -225,5 +208,5 @@ startEnsimeServer = (pidCallback) ->
 module.exports = {
   updateEnsimeServer: updateEnsimeServerManually,
   startEnsimeServer: startEnsimeServer,
-  classpathFileName: classpathFileName
+  classpathFileName: dotEnsimeToCPFileName
 }
