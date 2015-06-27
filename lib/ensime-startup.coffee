@@ -170,7 +170,7 @@ startEnsimeServer = (pidCallback) ->
           ), 2000
       else
         # Classpath file for running Ensime server is in place
-        classpath = toolsJar + ':' + fs.readFileSync(cpF, {encoding: 'utf8'})
+        classpath = toolsJar + path.delimiter + fs.readFileSync(cpF, {encoding: 'utf8'})
         javaCmd = "#{javaHome}#{path.sep}bin#{path.sep}java"
         ensimeServerFlags = "#{atom.config.get('Ensime.ensimeServerFlags')}"
         ensimeConfigFile = projectPath() + path.sep + '.ensime'
