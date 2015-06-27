@@ -201,10 +201,6 @@ startEnsimeServer = (pidCallback) ->
       checkForServerCP(20) # 40 sec should be enough?
 
 
-
-
-
-
 module.exports = {
   updateEnsimeServer: updateEnsimeServerManually,
   startEnsimeServer: startEnsimeServer,
