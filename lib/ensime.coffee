@@ -24,7 +24,6 @@ createClient = (portFileLoc, generalHandler) ->
 
 
 module.exports = Ensime =
-  subscriptions: null
 
   config: {
     ensimeServerVersion: {
@@ -73,28 +72,37 @@ module.exports = Ensime =
     }
   }
 
+  addCommandsForStoppedState: ->
+    # Need to have a started server and port file
+    @stoppedCommands = new CompositeDisposable
+    @stoppedCommands.add atom.commands.add 'atom-workspace', "ensime:update-ensime-server", => updateEnsimeServer()
+    @stoppedCommands.add atom.commands.add 'atom-workspace', "ensime:start", =>
+      if !projectPath()?
+        modalMsg("no valid Ensime project found (did you remember to generate a .ensime file?)")
+      else
+        @initProject()
+
+
+  addCommandsForStartedState: ->
+    @startedCommands = new CompositeDisposable
+    @startedCommands.add atom.commands.add 'atom-workspace', "ensime:stop", => @stopEnsime()
+
+    @startedCommands.add atom.commands.add 'atom-workspace', "ensime:typecheck-all", => @typecheckAll()
+    @startedCommands.add atom.commands.add 'atom-workspace', "ensime:unload-all", => @unloadAll()
+    @startedCommands.add atom.commands.add 'atom-workspace', "ensime:typecheck-file", => @typecheckFile()
+    @startedCommands.add atom.commands.add 'atom-workspace', "ensime:typecheck-buffer", => @typecheckBuffer()
+
+    @startedCommands.add atom.commands.add 'atom-workspace', "ensime:go-to-definition", => @goToDefinitionOfCursor()
+
+    @startedCommands.add atom.commands.add 'atom-workspace', "ensime:update-ensime-server", => updateEnsimeServer()
+
+
 
   activate: (state) ->
     @subscriptions = new CompositeDisposable
     @editorControllers = new WeakMap
     @showTypesControllers = new WeakMap
-
-    # Need to have a started server and port file
-    @subscriptions.add atom.commands.add 'atom-workspace', "ensime:update-ensime-server", => updateEnsimeServer()
-    @subscriptions.add atom.commands.add 'atom-workspace', "ensime:start", =>
-      if !projectPath()?
-        modalMsg("no valid Ensime project found (did you remember to generate a .ensime file?)")
-      else @initProject()
-
-    @subscriptions.add atom.commands.add 'atom-workspace', "ensime:stop", => @stopEnsime()
-
-    @subscriptions.add atom.commands.add 'atom-workspace', "ensime:typecheck-all", => @typecheckAll()
-    @subscriptions.add atom.commands.add 'atom-workspace', "ensime:unload-all", => @unloadAll()
-    @subscriptions.add atom.commands.add 'atom-workspace', "ensime:typecheck-file", => @typecheckFile()
-    @subscriptions.add atom.commands.add 'atom-workspace', "ensime:typecheck-buffer", => @typecheckBuffer()
-
-    @subscriptions.add atom.commands.add 'atom-workspace', "ensime:go-to-definition", => @goToDefinitionOfCursor()
-
+    @addCommandsForStoppedState()
     # https://discuss.atom.io/t/ok-to-use-grammar-cson-for-just-file-assoc/17801/11
     Promise.resolve(
       atom.packages.isPackageLoaded('language-scala') && atom.packages.activatePackage('language-scala')
@@ -107,11 +115,7 @@ module.exports = Ensime =
         atom.grammars.loadGrammar grammar
 
   deactivate: ->
-    @subscriptions.dispose()
-    @controlSubscription.dispose()
-    if not atom.config.get('Ensime.runServerDetached')
-      @ensimeServerPid?.kill()
-    @deleteControllers()
+
 
   maybeStartEnsimeServer: ->
     if not @ensimeServerPid
@@ -157,6 +161,9 @@ module.exports = Ensime =
     @typechecking = new TypeCheckingFeature()
 
     initClient = =>
+      # remove start command and add others
+      @stoppedCommands.dispose()
+      @addCommandsForStartedState()
 
       @client = createClient(portFile(), (msg) => @generalHandler(msg) )
 
@@ -173,6 +180,10 @@ module.exports = Ensime =
 
           @subscriptions.add editor.onDidDestroy () =>
             @removeControllers editor
+
+
+
+
 
     # Startup server
     if not fs.existsSync(portFile())
@@ -209,8 +220,6 @@ module.exports = Ensime =
     @ensimeServerPid?.kill()
     @ensimeServerPid = null
 
-
-
     @statusbarView?.destroy()
     @statusbarView = null
 
@@ -219,13 +228,16 @@ module.exports = Ensime =
     @client?.destroy()
     @client = null
 
-
     @typechecking?.destroy()
     @typechecking = null
 
+    @startedCommands.dispose()
+    @addCommandsForStoppedState()
+
+    @subscriptions.dispose()
+    @controlSubscription.dispose()
 
 
-    #atom.packages.deactivatePackage('Ensime')
 
 
 
