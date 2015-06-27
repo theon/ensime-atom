@@ -23,6 +23,9 @@ createClient = (portFileLoc, generalHandler) ->
   new Client(port, generalHandler)
 
 
+scalaSourceSelector = """atom-text-editor[data-grammar="source scala"]"""
+
+
 module.exports = Ensime =
 
   config: {
@@ -83,19 +86,22 @@ module.exports = Ensime =
         @initProject()
 
 
+
+
   addCommandsForStartedState: ->
     @startedCommands = new CompositeDisposable
     @startedCommands.add atom.commands.add 'atom-workspace', "ensime:stop", => @stopEnsime()
 
     @startedCommands.add atom.commands.add 'atom-workspace', "ensime:typecheck-all", => @typecheckAll()
     @startedCommands.add atom.commands.add 'atom-workspace', "ensime:unload-all", => @unloadAll()
-    @startedCommands.add atom.commands.add 'atom-workspace', "ensime:typecheck-file", => @typecheckFile()
-    @startedCommands.add atom.commands.add 'atom-workspace', "ensime:typecheck-buffer", => @typecheckBuffer()
+    @startedCommands.add atom.commands.add scalaSourceSelector, "ensime:typecheck-file", => @typecheckFile()
+    @startedCommands.add atom.commands.add scalaSourceSelector, "ensime:typecheck-buffer", => @typecheckBuffer()
 
-    @startedCommands.add atom.commands.add 'atom-workspace', "ensime:go-to-definition", => @goToDefinitionOfCursor()
+    @startedCommands.add atom.commands.add scalaSourceSelector, "ensime:go-to-definition", => @goToDefinitionOfCursor()
 
     @startedCommands.add atom.commands.add 'atom-workspace', "ensime:update-ensime-server", => updateEnsimeServer()
 
+    @startedCommands.add atom.commands.add scalaSourceSelector, "ensime:format-source", => @formatCurrentSourceFile()
 
 
   activate: (state) ->
@@ -287,3 +293,16 @@ module.exports = Ensime =
           log('@client undefined')
           []
     }
+
+  formatCurrentSourceFile: ->
+    editor = atom.workspace.getActiveTextEditor()
+    cursorPos = editor.getCursorBufferPosition()
+    req =
+      typehint: "FormatOneSourceReq"
+      file:
+        file: editor.getPath()
+        contents: editor.getText()
+    @client?.post(req, (msg) ->
+      editor.setText(msg)
+      editor.setCursorBufferPosition(cursorPos)
+    )
