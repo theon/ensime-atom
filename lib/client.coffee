@@ -10,16 +10,15 @@ class Client
     @ensimeMessageCounter = 1
     @callbackMap = {}
 
-
-
     @parser = new Swank.SwankParser( (env) =>
       console.log("incoming: #{env}")
       json = JSON.parse(env)
       callId = json.callId
       # If :return - lookup in map, otherwise use some general function for handling general msgs
-      if(callId)
+      if(json.typehint == "RpcResponseEnvelope")
+        callId = json.callId
         try
-          @callbackMap[callId](json.msg)
+          @callbackMap[callId](json.payload)
         catch error
           console.log("error in callback: #{error}")
         finally
