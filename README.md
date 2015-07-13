@@ -7,7 +7,7 @@ Way early still and will most likely be very buggy. Or maybe not start at all. T
 
 ## Prerequisites
 - sbt (used to bootstrap server)
-- .ensime file. generate with sbt gen-ensime https://github.com/ensime/ensime-server/wiki/Quick-Start-Guide#installing-the-ensime-sbt-plugin
+- [.ensime file. generate with sbt gen-ensime](https://github.com/ensime/ensime-emacs/wiki/Quick-Start-Guide#installing-the-ensime-sbt-plugin)
 - Autocomplete-plus for autocomplete. https://atom.io/packages/autocomplete-plus
 
 ## Getting started
