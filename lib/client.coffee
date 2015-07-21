@@ -25,7 +25,7 @@ class Client
           delete @callbackMap[callId]
 
       else
-        generalMsgHandler(json) # We let swank leak for now because I don't really know how (:clear-scala-notes) should
+        generalMsgHandler(json.payload) # We let swank leak for now because I don't really know how (:clear-scala-notes) should
         # be translated into json. So unfortunately direct deps from main to car/cdr and such.
     )
 
