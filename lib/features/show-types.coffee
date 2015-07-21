@@ -61,8 +61,11 @@ class ShowTypes
       point: offset
 
     @client.post(req, (msg) =>
-      @exprTypeTooltip?.updateText(formatType(msg.type))
-
+      if msg.typehint == 'SymbolInfo'
+        @exprTypeTooltip?.updateText(formatType(msg.type))
+      else
+        # if msg.typehint == 'FalseResponse'
+        # do nothing
     )
 
   deactivate: ->

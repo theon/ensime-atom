@@ -10,6 +10,7 @@ EditorControl = require './editor-control'
 {updateEnsimeServer, startEnsimeServer, classpathFileName} = require './ensime-startup'
 ShowTypes = require './features/show-types'
 TypeCheckingFeature = require('./features/typechecking')
+AutocompletePlusProvider = require('./features/autocomplete-plus')
 {log, modalMsg, isScalaSource, projectPath} = require './utils'
 
 
@@ -120,7 +121,10 @@ module.exports = Ensime =
         grammar = atom.packages.resolvePackagePath('Ensime') + path.sep + 'grammars-hidden' + path.sep + 'scala.cson'
         atom.grammars.loadGrammar grammar
 
+
+
   deactivate: ->
+    @stopEnsime()
 
 
   maybeStartEnsimeServer: ->
@@ -188,7 +192,7 @@ module.exports = Ensime =
             @removeControllers editor
 
 
-
+      @autocompletePlusProvider = new AutocompletePlusProvider(@client)
 
 
     # Startup server
@@ -268,29 +272,25 @@ module.exports = Ensime =
     pos = editor.getCursorBufferPosition()
     @client.goToTypeAtPoint(textBuffer, pos)
 
-
-
-  provideLinks: ->
-    Processor = require('./provide-links-processor')
-    new Processor( {getClient: => @client})
-
   provideAutocomplete: ->
     log('provideAutocomplete called')
-    getClient = =>
-      log('getClient called and this is ' + this + ", @client is " + @client)
-      @client
+
+    getProvider = =>
+      log('getProvider called')
+      @autocompletePlusProvider
 
     {
       selector: '.source.scala'
       disableForSelector: '.source.scala .comment'
 
       getSuggestions: ({editor, bufferPosition, scopeDescriptor, prefix}) =>
-        if(getClient())
+        provider = getProvider()
+        if(provider)
           new Promise (resolve) =>
             log('ensime.getSuggestions')
-            getClient().getCompletions(editor.getBuffer(), bufferPosition, resolve)
+            provider.getCompletions(editor.getBuffer(), bufferPosition, resolve)
         else
-          log('@client undefined')
+          log('@autocompletePlusProvider undefined')
           []
     }
 

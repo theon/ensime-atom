@@ -1,6 +1,5 @@
 net = require('net')
 {log} = require './utils'
-{formatCompletionsSignature} = require './formatting'
 Swank = require './lisp/swank-protocol'
 _ = require 'lodash'
 
@@ -14,9 +13,9 @@ class Client
       console.log("incoming: #{env}")
       json = JSON.parse(env)
       callId = json.callId
-      # If :return - lookup in map, otherwise use some general function for handling general msgs
-      if(json.typehint == "RpcResponseEnvelope")
-        callId = json.callId
+      # If RpcResponse - lookup in map, otherwise use some general function for handling general msgs
+
+      if(callId)
         try
           @callbackMap[callId](json.payload)
         catch error
@@ -25,8 +24,7 @@ class Client
           delete @callbackMap[callId]
 
       else
-        generalMsgHandler(json.payload) # We let swank leak for now because I don't really know how (:clear-scala-notes) should
-        # be translated into json. So unfortunately direct deps from main to car/cdr and such.
+        generalMsgHandler(json.payload)
     )
 
     @openSocket(port)
@@ -95,45 +93,7 @@ class Client
     )
 
 
-  getCompletions: (textBuffer, bufferPosition, callback) =>
-    file = textBuffer.getPath()
-    offset = textBuffer.characterIndexForPosition(bufferPosition)
 
-    msg =
-      typehint: "CompletionsReq"
-      fileInfo:
-        file: file
-        contents: textBuffer.getText()
-      point: offset
-      maxResults: 5
-      caseSens: false
-      reload: true
-
-    @post(msg, (result) ->
-      completions = result.completions
-
-
-      if(completions)
-        translate = (c) ->
-          typeSig = c.typeSig
-          formattedSignature = formatCompletionsSignature(typeSig.sections[0]) # FIXME!
-          {leftLabel: c.typeSig.result, snippet: "#{c.name}(#{formattedSignature})"}
-
-        autocompletions = (translate c for c in completions)
-        ### Autocomplete + :
-        suggestion =
-          text: 'someText' # OR
-          snippet: 'someText(${1:myArg})'
-          replacementPrefix: 'so' # (optional)
-          type: 'function' # (optional)
-          leftLabel: '' # (optional)
-          leftLabelHTML: '' # (optional)
-          rightLabel: '' # (optional)
-          rightLabelHTML: '' # (optional)
-          iconHTML: '' # (optional)
-        ###
-        callback(autocompletions)
-    )
 
 
   typecheckBuffer: (b) =>
@@ -171,26 +131,35 @@ class Client
       "end": endO
     }
 
-    @post(msg, (result) ->
-      syms = result.syms
 
-      decorate = (sym) ->
-        startPos = b.positionForCharacterIndex(parseInt(sym[1]))
-        endPos = b.positionForCharacterIndex(parseInt(sym[2]))
-        marker = editor.markBufferRange([startPos, endPos],
-                invalidate: 'inside',
-                class: "scala #{sym[0]}"
-                )
-        decoration = editor.decorateMarker(marker,
-          type: 'highlight',
-          class: sym[0]
-        )
-        marker
+    new Promise (resolve, reject) =>
+      @post(msg, (result) ->
+        syms = result.syms
 
-      decorations = decorate sym for sym in syms
+        markers = (sym) ->
+          startPos = b.positionForCharacterIndex(parseInt(sym[1]))
+          endPos = b.positionForCharacterIndex(parseInt(sym[2]))
+          marker = editor.markBufferRange([startPos, endPos],
+                  invalidate: 'inside',
+                  class: "scala #{sym[0]}"
+                  )
+          decoration = editor.decorateMarker(marker,
+            type: 'highlight',
+            class: sym[0]
+          )
+          marker
 
-    )
-    []
+        makeCodeLink = (marker) ->
+          range: marker.getBufferRange()
+
+        makers = markers sym for sym in syms
+        codeLinks = makeCodeLink marker for maker in makers
+
+
+
+        resolve(codeLinks)
+      )
+
 
 
 

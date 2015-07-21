@@ -51,8 +51,9 @@ class TypeChecking
         # TODO: add markers if editor open
         if(@editors.has(file))
           editor = @editors.get(file)
-          # for note in notes
-          #   editor.markRegio
+          for note in notes
+            marker = editor.markBufferPosition([note.line, note.col], {invalidate: 'inside'})
+            editor.decorateMarker(marker, {})
 
 
   clearScalaNotes: ->
