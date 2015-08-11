@@ -247,7 +247,7 @@ module.exports = Ensime =
     @subscriptions.dispose()
     @controlSubscription.dispose()
 
-
+    @autocompletePlusProvider = null
 
 
 
@@ -276,7 +276,6 @@ module.exports = Ensime =
     log('provideAutocomplete called')
 
     getProvider = =>
-      log('getProvider called')
       @autocompletePlusProvider
 
     {
@@ -290,7 +289,6 @@ module.exports = Ensime =
             log('ensime.getSuggestions')
             provider.getCompletions(editor.getBuffer(), bufferPosition, resolve)
         else
-          log('@autocompletePlusProvider undefined')
           []
     }
 
