@@ -1,7 +1,7 @@
 {Subscriber} = require 'emissary'
 {CompositeDisposable} = require 'atom'
 $ = require 'jquery'
-{pixelPositionFromMouseEvent, screenPositionFromMouseEvent, getElementsByClass} = require './utils'
+{bufferPositionFromMouseEvent, getElementsByClass} = require './utils'
 {formatType} = require './formatting'
 
 class EditorControl
@@ -50,11 +50,8 @@ class EditorControl
     # Maybe first mark with underline and change pointer on hover and when clicking, do the jump
     @subscriber.subscribe @scroll, 'mousedown', (e) =>
       {detail, shiftKey, metaKey, ctrlKey, altKey} = e
-      pixelPt = pixelPositionFromMouseEvent(@editor, e)
-      screenPt = @editor.screenPositionForPixelPosition(pixelPt)
-      bufferPt = @editor.bufferPositionForScreenPosition(screenPt)
-      buffer = @editor.getBuffer()
-      if(altKey) then @client.goToTypeAtPoint(buffer, bufferPt)
+      bufferPt = bufferPositionFromMouseEvent(@editor, e)
+      if(altKey) then @client.goToTypeAtPoint(@editor.getBuffer(), bufferPt)
 
 
   deactivate: ->

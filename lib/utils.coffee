@@ -1,6 +1,8 @@
 path = require 'path'
 fs = require 'fs'
 
+
+
 isScalaSource = (editor) ->
   buffer = editor.getBuffer()
   fname = buffer.getUri()
@@ -17,7 +19,12 @@ pixelPositionFromMouseEvent = (editor, event) ->
 
 # screen position from mouse event
 screenPositionFromMouseEvent = (editor, event) ->
-  editor.screenPositionForPixelPosition(pixelPositionFromMouseEvent(editor, event))
+  atom.views.getView(editor).component.screenPositionForMouseEvent event
+  #editor.screenPositionForPixelPosition(pixelPositionFromMouseEvent(editor, event))
+
+# from haskell-ide
+bufferPositionFromMouseEvent = (editor, event) ->
+  editor.bufferPositionForScreenPosition (screenPositionFromMouseEvent(editor, event))
 
 getElementsByClass = (elem,klass) ->
   elem.rootElement.querySelectorAll(klass)
@@ -42,6 +49,7 @@ module.exports = {
   isScalaSource,
   pixelPositionFromMouseEvent,
   screenPositionFromMouseEvent,
+  bufferPositionFromMouseEvent,
   getElementsByClass,
   log,
   modalMsg,

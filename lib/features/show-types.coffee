@@ -1,40 +1,36 @@
-{Subscriber} = require 'emissary'
 {TooltipView} = require '../views/tooltip-view'
 $ = require 'jquery'
-{pixelPositionFromMouseEvent, getElementsByClass} = require '../utils'
+{bufferPositionFromMouseEvent, pixelPositionFromMouseEvent, getElementsByClass} = require '../utils'
 {formatType} = require '../formatting'
+SubAtom = require('sub-atom')
+
 
 class ShowTypes
   constructor: (@editor, @client) ->
-    @subscriber = new Subscriber()
+    @disposables = new SubAtom
 
-    @editorView = atom.views.getView(@editor);
+    @editorView = atom.views.getView(@editor)
+    @editorElement = @editorView.rootElement
 
-
-    @scroll = $(getElementsByClass(@editorView, '.scroll-view'))
-
-    @subscriber.subscribe @scroll, 'mousemove', (e) =>
+    @disposables.add @editorElement, 'mousemove', '.scroll-view', (e) =>
       @clearExprTypeTimeout()
       @exprTypeTimeout = setTimeout (=>
         @showExpressionType e
       ), 100
 
-
-    @subscriber.subscribe @scroll, 'mouseout', (e) =>
+    @disposables.add @editorElement, 'mouseout', '.scroll-view', (e) =>
       @clearExprTypeTimeout()
 
-    @editor.onDidDestroy =>
+    @disposables.add @editor.onDidDestroy =>
       @deactivate()
 
-    #TODO: Can I add a lostFocus-handler to mitigate: https://github.com/ensime/ensime-atom/issues/1
 
   # get expression type under mouse cursor and show it
   showExpressionType: (e) ->
     return if @exprTypeTooltip?
 
     pixelPt = pixelPositionFromMouseEvent(@editor, e)
-    screenPt = @editor.screenPositionForPixelPosition(pixelPt)
-    bufferPt = @editor.bufferPositionForScreenPosition(screenPt)
+    bufferPt = bufferPositionFromMouseEvent(@editor, e)
     nextCharPixelPt = @editorView.pixelPositionForBufferPosition([bufferPt.row, bufferPt.column + 1])
 
     return if pixelPt.left >= nextCharPixelPt.left
@@ -70,7 +66,7 @@ class ShowTypes
 
   deactivate: ->
     @clearExprTypeTimeout()
-    @subscriber.unsubscribe()
+    @disposables.dispose()
 
   # helper function to hide tooltip and stop timeout
   clearExprTypeTimeout: ->
