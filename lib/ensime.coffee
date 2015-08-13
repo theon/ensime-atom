@@ -301,6 +301,6 @@ module.exports = Ensime =
         file: editor.getPath()
         contents: editor.getText()
     @client?.post(req, (msg) ->
-      editor.setText(msg)
+      editor.setText(msg.text)
       editor.setCursorBufferPosition(cursorPos)
     )
