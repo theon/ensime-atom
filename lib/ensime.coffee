@@ -6,13 +6,17 @@ path = require('path')
 Client = require './client'
 StatusbarView = require './views/statusbar-view'
 {CompositeDisposable} = require 'atom'
-EditorControl = require './editor-control'
 {updateEnsimeServer, startEnsimeServer, classpathFileName} = require './ensime-startup'
 ShowTypes = require './features/show-types'
+GoToType = require './features/go-to-type'
+Implicits = require('./features/implicits')
+
 TypeCheckingFeature = require('./features/typechecking')
 AutocompletePlusProvider = require('./features/autocomplete-plus')
 {log, modalMsg, isScalaSource, projectPath} = require './utils'
 
+ImplicitInfo = require('./model/implicit-info')
+ImplicitInfoView = require('./views/implicit-info-view')
 
 portFile = ->
     loadSettings = atom.getLoadSettings()
@@ -29,52 +33,43 @@ scalaSourceSelector = """atom-text-editor[data-grammar="source scala"]"""
 
 module.exports = Ensime =
 
-  config: {
-    ensimeServerVersion: {
+  config:
+    ensimeServerVersion:
       description: 'Version of Ensime server',
       type: 'string',
       default: "0.9.10-SNAPSHOT",
       order: 1
-    },
-    sbtExec: {
-      description: "Full path to sbt. 'which sbt'",
-      type: 'string',
-      default: '',
+    sbtExec:
+      description: "Full path to sbt. 'which sbt'"
+      type: 'string'
+      default: ''
       order: 2
-    },
-    ensimeServerFlags: {
-      description: 'java flags for ensime server startup',
-      type: 'string',
-      default: '',
-      order: 3,
-    },
-    devMode: {
-      description: 'Turn on for extra console logging during development',
-      type: 'boolean',
-      default: false,
-      order: 4,
-    },
-    runServerDetached: {
-      description: "Run the Ensime server as a detached process. Useful while developing",
-      type: 'boolean',
-      default: false,
+    ensimeServerFlags:
+      description: 'java flags for ensime server startup'
+      type: 'string'
+      default: ''
+      order: 3
+    devMode:
+      description: 'Turn on for extra console logging during development'
+      type: 'boolean'
+      default: false
+      order: 4
+    runServerDetached:
+      description: "Run the Ensime server as a detached process. Useful while developing"
+      type: 'boolean'
+      default: false
       order: 5
-    }
-    typecheckWhen: {
-      description: "When to typecheck",
-      type: 'string',
-      default: 'typing',
-      enum: ['command', 'save', 'typing'],
+    typecheckWhen:
+      description: "When to typecheck"
+      type: 'string'
+      default: 'typing'
+      enum: ['command', 'save', 'typing']
       order: 6
-
-    }
-    typecheckTypingDelay: {
-      description: "Delay for typechecking while typing, in milliseconds. Too low might cause performance issues."
-      type: 'integer'
-      default: '500',
+    enableTypeTooltip:
+      description: "Enable tooltip that shows type when hovering"
+      type: 'boolean'
+      default: true
       order: 7
-    }
-  }
 
   addCommandsForStoppedState: ->
     # Need to have a started server and port file
@@ -93,6 +88,9 @@ module.exports = Ensime =
     @startedCommands = new CompositeDisposable
     @startedCommands.add atom.commands.add 'atom-workspace', "ensime:stop", => @stopEnsime()
 
+    @startedCommands.add atom.commands.add scalaSourceSelector, "ensime:mark-implicits", => @markImplicits()
+    @startedCommands.add atom.commands.add scalaSourceSelector, "ensime:unmark-implicits", => @unmarkImplicits()
+    @startedCommands.add atom.commands.add scalaSourceSelector, "ensime:show-implicits", => @showImplicits()
     @startedCommands.add atom.commands.add 'atom-workspace', "ensime:typecheck-all", => @typecheckAll()
     @startedCommands.add atom.commands.add 'atom-workspace', "ensime:unload-all", => @unloadAll()
     @startedCommands.add atom.commands.add scalaSourceSelector, "ensime:typecheck-file", => @typecheckFile()
@@ -107,8 +105,12 @@ module.exports = Ensime =
 
   activate: (state) ->
     @subscriptions = new CompositeDisposable
-    @editorControllers = new WeakMap
+
+    # Feature controllers
     @showTypesControllers = new WeakMap
+    @goToTypeControllers = new WeakMap
+    @implicitControllers = new WeakMap
+
     @addCommandsForStoppedState()
     # https://discuss.atom.io/t/ok-to-use-grammar-cson-for-just-file-assoc/17801/11
     Promise.resolve(
@@ -120,6 +122,7 @@ module.exports = Ensime =
         # language-scala is not loaded
         grammar = atom.packages.resolvePackagePath('Ensime') + path.sep + 'grammars-hidden' + path.sep + 'scala.cson'
         atom.grammars.loadGrammar grammar
+
 
 
 
@@ -170,6 +173,13 @@ module.exports = Ensime =
   initProject: ->
     @typechecking = new TypeCheckingFeature()
 
+    # Register model-view mappings
+    @subscriptions.add atom.views.addViewProvider ImplicitInfo, (implicitInfo) ->
+      elem = document.createElement("div")
+      elem.appendChild(document.createTextNode(implicitInfo.info?.toString))
+      elem
+
+
     initClient = =>
       # remove start command and add others
       @stoppedCommands.dispose()
@@ -184,9 +194,11 @@ module.exports = Ensime =
       @client.post({"typehint":"ConnectionInfoReq"}, (msg) -> )
 
       @controlSubscription = atom.workspace.observeTextEditors (editor) =>
-        if not @editorControllers.get(editor) && isScalaSource(editor)
-          @editorControllers.set(editor, new EditorControl(editor, @client))
-          @showTypesControllers.set(editor, new ShowTypes(editor, @client))
+        if isScalaSource(editor)
+          if atom.config.get('Ensime.enableTypeTooltip')
+            if not @showTypesControllers.get(editor) then @showTypesControllers.set(editor, new ShowTypes(editor, @client))
+          if not @goToTypeControllers.get(editor) then @goToTypeControllers.set(editor, new GoToType(editor, @client))
+          if not @implicitControllers.get(editor) then @implicitControllers.set(editor, new Implicits(editor, @client))
 
           @subscriptions.add editor.onDidDestroy () =>
             @removeControllers editor
@@ -218,8 +230,10 @@ module.exports = Ensime =
   removeControllers: (editor) ->
     @showTypesControllers.get(editor)?.deactivate()
     @showTypesControllers.delete(editor)
-    @editorControllers.get(editor)?.deactivate()
-    @editorControllers.delete(editor)
+    @goToTypeControllers.get(editor)?.deactivate()
+    @goToTypeControllers.delete(editor)
+    @implicitControllers.get(editor)?.deactivate()
+    @implicitControllers.delete(editor)
 
   deleteControllers: ->
     for editor in atom.workspace.getTextEditors()
@@ -227,7 +241,9 @@ module.exports = Ensime =
 
 
   stopEnsime: ->
-    @ensimeServerPid?.kill()
+    if not atom.config.get('Ensime.runServerDetached')
+      @ensimeServerPid?.kill()
+
     @ensimeServerPid = null
 
     @statusbarView?.destroy()
@@ -271,6 +287,19 @@ module.exports = Ensime =
     textBuffer = editor.getBuffer()
     pos = editor.getCursorBufferPosition()
     @client.goToTypeAtPoint(textBuffer, pos)
+
+  markImplicits: ->
+    editor = atom.workspace.getActiveTextEditor()
+    @implicitControllers.get(editor)?.showImplicits()
+
+  unmarkImplicits: ->
+    editor = atom.workspace.getActiveTextEditor()
+    @implicitControllers.get(editor)?.clearMarkers()
+
+  showImplicits: ->
+    editor = atom.workspace.getActiveTextEditor()
+    @implicitControllers.get(editor)?.showImplicitsAtCursor()
+
 
   provideAutocomplete: ->
     log('provideAutocomplete called')

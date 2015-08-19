@@ -20,6 +20,7 @@ pixelPositionFromMouseEvent = (editor, event) ->
 # screen position from mouse event
 screenPositionFromMouseEvent = (editor, event) ->
   atom.views.getView(editor).component.screenPositionForMouseEvent event
+  # This was broken:
   #editor.screenPositionForPixelPosition(pixelPositionFromMouseEvent(editor, event))
 
 # from haskell-ide

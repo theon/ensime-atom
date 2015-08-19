@@ -25,8 +25,8 @@ class AutocompletePlusProvider
         translate = (c) ->
           typeSig = c.typeSig
           if(c.isCallable)
-            formattedSignature = formatCompletionsSignature(typeSig.sections[0]) # FIXME!
-            {leftLabel: c.typeSig.result, snippet: "#{c.name}(#{formattedSignature})"}
+            formattedSignature = formatCompletionsSignature(typeSig.sections)
+            {leftLabel: c.typeSig.result, snippet: "#{c.name}#{formattedSignature}"}
           else
             {snippet: c.name}
 
