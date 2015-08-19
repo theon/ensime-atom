@@ -12,7 +12,6 @@ class TypeChecking
         title: 'Ensime'
     @messages.attach()
 
-
     @disposables = new CompositeDisposable
 
     @editors = new Map
