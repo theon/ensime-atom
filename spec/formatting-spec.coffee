@@ -81,3 +81,29 @@ describe 'formatType', ->
       """
     type = JSON.parse(typeStr)
     expect(formatType(type)).toBe("se.foo.bar.Thang")
+
+
+  it "should format by-name with arrow", ->
+    type =
+      "name": "<byname>",
+      "fullName": "scala.<byname>",
+      "typehint": "BasicTypeInfo",
+      "typeId": 2861,
+      "typeArgs": [
+        {
+          "name": "T",
+          "fullName": "net.liftweb.util.T",
+          "typehint": "BasicTypeInfo",
+          "typeId": 2862,
+          "typeArgs": [],
+          "members": [],
+          "declAs": {
+            "typehint": "Nil"
+          }
+        }
+      ],
+      "members": [],
+      "declAs": {
+        "typehint": "Class"
+      }
+    expect(formatType(type)).toBe("=> T")
