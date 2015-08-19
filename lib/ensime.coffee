@@ -7,9 +7,11 @@ Client = require './client'
 StatusbarView = require './views/statusbar-view'
 {CompositeDisposable} = require 'atom'
 {updateEnsimeServer, startEnsimeServer, classpathFileName} = require './ensime-startup'
+
 ShowTypes = require './features/show-types'
 GoToType = require './features/go-to-type'
 Implicits = require('./features/implicits')
+AutoTypecheck = require('./features/auto-typecheck')
 
 TypeCheckingFeature = require('./features/typechecking')
 AutocompletePlusProvider = require('./features/autocomplete-plus')
@@ -110,6 +112,7 @@ module.exports = Ensime =
     @showTypesControllers = new WeakMap
     @goToTypeControllers = new WeakMap
     @implicitControllers = new WeakMap
+    @autotypecheckControllers = new WeakMap
 
     @addCommandsForStoppedState()
     # https://discuss.atom.io/t/ok-to-use-grammar-cson-for-just-file-assoc/17801/11
@@ -199,9 +202,10 @@ module.exports = Ensime =
             if not @showTypesControllers.get(editor) then @showTypesControllers.set(editor, new ShowTypes(editor, @client))
           if not @goToTypeControllers.get(editor) then @goToTypeControllers.set(editor, new GoToType(editor, @client))
           if not @implicitControllers.get(editor) then @implicitControllers.set(editor, new Implicits(editor, @client))
+          if not @autotypecheckControllers.get(editor) then @autotypecheckControllers.set(editor, new AutoTypecheck(editor, @client))
 
           @subscriptions.add editor.onDidDestroy () =>
-            @removeControllers editor
+            @deleteControllers editor
 
 
       @autocompletePlusProvider = new AutocompletePlusProvider(@client)
@@ -227,17 +231,22 @@ module.exports = Ensime =
     else
       tryStartup(200)
 
-  removeControllers: (editor) ->
-    @showTypesControllers.get(editor)?.deactivate()
-    @showTypesControllers.delete(editor)
-    @goToTypeControllers.get(editor)?.deactivate()
-    @goToTypeControllers.delete(editor)
-    @implicitControllers.get(editor)?.deactivate()
-    @implicitControllers.delete(editor)
 
-  deleteControllers: ->
+
+  deleteControllers: (editor) ->
+    deactivateAndDelete = (controller) =>
+      controller.get(editor)?.deactivate()
+      controller.delete(editor)
+
+    deactivateAndDelete(@showTypesControllers)
+    deactivateAndDelete(@goToTypeControllers)
+    deactivateAndDelete(@implicitControllers)
+    deactivateAndDelete(@autotypecheckControllers)
+
+
+  deleteAllEditorsControllers: ->
     for editor in atom.workspace.getTextEditors()
-      @removeControllers editor
+      @deleteControllers editor
 
 
   stopEnsime: ->
@@ -249,7 +258,7 @@ module.exports = Ensime =
     @statusbarView?.destroy()
     @statusbarView = null
 
-    @deleteControllers()
+    @deleteAllEditorsControllers()
 
     @client?.destroy()
     @client = null

@@ -47,7 +47,10 @@ formatType = (theType) ->
       name
     else
       formattedTypeArgs = (formatType(typeArg) for typeArg in typeArgs).join(", ")
-      name + "[#{formattedTypeArgs}]"
+      if name == 'scala.<byname>'
+        "=> " + formattedTypeArgs
+      else
+        name + "[#{formattedTypeArgs}]"
 
 module.exports = {
   formatCompletionsSignature,
