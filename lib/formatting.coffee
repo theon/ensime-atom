@@ -3,14 +3,16 @@
 # This is the one returned from completions
 formatCompletionsSignature = (paramLists) ->
   formatParamLists = (paramLists) ->
+    i = 0
     formatParamList = (paramList) ->
-      formatParam = (param, i) ->
+      formatParam = (param) ->
+        i = i+1
         "${#{i}:#{param[0]}: #{param[1]}}"
-      p = (formatParam(param, i+1) for param, i in paramList)
-      p.join(", ")
+      p = (formatParam(param) for param in paramList)
+      "(" + p.join(", ") + ")"
 
     formattedParamLists = (formatParamList paramList for paramList in paramLists)
-    formattedParamLists.join("|")
+    formattedParamLists.join("")
   if(paramLists)
     formatParamLists(paramLists)
   else
@@ -40,11 +42,12 @@ formatType = (theType) ->
     formatParamSections(theType.paramSections) + ": " + formatType(theType.resultType)
   else if(theType.typehint == "BasicTypeInfo")
     typeArgs = theType.typeArgs
+    name = if theType.declAs.typehint in ['Class', 'Trait', 'Object', 'Interface'] then theType.fullName else theType.name
     if not typeArgs || typeArgs.length == 0
-      theType.fullName
+      name
     else
       formattedTypeArgs = (formatType(typeArg) for typeArg in typeArgs).join(", ")
-      theType.fullName + "[#{formattedTypeArgs}]"
+      name + "[#{formattedTypeArgs}]"
 
 module.exports = {
   formatCompletionsSignature,
