@@ -4,18 +4,21 @@ $ = require 'jquery'
 # Used for hover for type
 class TooltipView extends View
   @content: ->
-    @div class: 'ensime-tooltip'
+    @div class: 'tooltip ensime-tooltip', =>
+      @div class: 'tooltip-inner', outlet: 'inner'
 
   initialize: (@rect, text = null) ->
-    @text(text) if text?
+    @inner.text(text) if text?
     $(document.body).append this
     @updatePosition()
+    @fadeTo(0,1) if text?
 
   # update tooltip text
   updateText: (text) ->
-    @text(text)
+    @inner.text(text)
     #console.log("TooltipView updateText: #{text}")
     @updatePosition()
+    @fadeTo(0,1)
 
   # smart position update
   updatePosition: ->
