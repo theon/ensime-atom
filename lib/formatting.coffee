@@ -1,4 +1,4 @@
-
+_ = require 'lodash'
 
 # This is the one returned from completions
 formatCompletionsSignature = (paramLists) ->
@@ -52,7 +52,17 @@ formatType = (theType) ->
       else
         name + "[#{formattedTypeArgs}]"
 
+
+
+
+formatImplicitInfo = (info) ->
+    if info.typehint == 'ImplicitParamInfo'
+        "Implicit parameters added to call of #{info.fun.localName}: (#{_.map(info.params, (p) -> p.localName).join(", ")})"
+    else if info.typehint == 'ImplicitConversionInfo'
+      "Implicit conversion: #{info.fun.localName}"
+
 module.exports = {
   formatCompletionsSignature,
-  formatType
+  formatType,
+  formatImplicitInfo
 }

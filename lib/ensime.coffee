@@ -72,6 +72,18 @@ module.exports = Ensime =
       type: 'boolean'
       default: true
       order: 7
+    modifierKeyForJumpToDefinition:
+      description: "Modifier key used when clicking for jump to definition"
+      type: 'string'
+      enum: ['cmd', 'alt', 'ctrl']
+      default: 'cmd'
+      order: 8
+    markImplicitsAutomatically:
+      description: "Mark implicits on buffer load and save"
+      type: 'boolean'
+      default: true
+      order: 9
+
 
   addCommandsForStoppedState: ->
     # Need to have a started server and port file
@@ -103,6 +115,7 @@ module.exports = Ensime =
     @startedCommands.add atom.commands.add 'atom-workspace', "ensime:update-ensime-server", => updateEnsimeServer()
 
     @startedCommands.add atom.commands.add scalaSourceSelector, "ensime:format-source", => @formatCurrentSourceFile()
+    @startedCommands.add atom.commands.add scalaSourceSelector, "ensime:get-import-suggestions", => @getImportSuggestions()
 
 
   activate: (state) ->
@@ -178,10 +191,8 @@ module.exports = Ensime =
 
     # Register model-view mappings
     @subscriptions.add atom.views.addViewProvider ImplicitInfo, (implicitInfo) ->
-      elem = document.createElement("div")
-      elem.appendChild(document.createTextNode(implicitInfo.info?.toString))
-      elem
-
+      result = new ImplicitInfoView().initialize(implicitInfo)
+      result
 
     initClient = =>
       # remove start command and add others
@@ -319,6 +330,8 @@ module.exports = Ensime =
     {
       selector: '.source.scala'
       disableForSelector: '.source.scala .comment'
+      inclusionPriority: 10
+      excludeLowerPriority: true
 
       getSuggestions: ({editor, bufferPosition, scopeDescriptor, prefix}) =>
         provider = getProvider()
@@ -342,3 +355,6 @@ module.exports = Ensime =
       editor.setText(msg.text)
       editor.setCursorBufferPosition(cursorPos)
     )
+
+  getImportSuggestions: ->
+    @client.getImportSuggestions([atom.workspace.getActiveTextEditor().getWordUnderCursor()])

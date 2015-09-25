@@ -97,14 +97,14 @@ class Client
 
 
 
-  typecheckBuffer: (b) =>
+  typecheckBuffer: (b, callback = () ->) =>
     msg =
       typehint: "TypecheckFileReq"
       fileInfo:
         file: b.getPath()
         contents: b.getText()
 
-    @post(msg, (result) ->)
+    @post(msg, callback)
 
   typecheckFile: (b) =>
     msg =
@@ -161,10 +161,17 @@ class Client
         resolve(codeLinks)
       )
 
+  getImportSuggestions: (words)->
+    msg =
+      typehint: 'ImportSuggestionsReq'
+      file: '' # not used
+      point: 0 # not used
+      names: words
+      maxResults: 5
 
-
-
-
+    @post(msg, (result) ->
+      console.log(result)
+    )
 
 
 symbols = ["ObjectSymbol"

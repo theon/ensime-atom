@@ -11,7 +11,7 @@ class AutoTypecheck
         @client.typecheckBuffer(@editor.getBuffer())
 
      # Typecheck buffer while typing
-    atom.config.observe 'Ensime.typecheckWhen', (value) =>
+    @disposables.add atom.config.observe 'Ensime.typecheckWhen', (value) =>
       if(value == 'typing')
         @typecheckWhileTypingDisposable = @editor.onDidStopChanging () =>
           @client.typecheckBuffer(@editor.getBuffer())

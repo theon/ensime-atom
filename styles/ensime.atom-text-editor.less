@@ -24,11 +24,33 @@ atom-text-editor::shadow {
 .highlight.implicit .region {
   border-bottom: 1px dashed fade(@implicit-color, 70%);
 }
+
+// Styles for ensime gutter, don't know if we should really have one
 atom-text-editor .gutter[gutter-name="ensime-implicits"] {
   border-left: none;
 }
 
-atom-text-editor .gutter .implicit:before {
-  content: "I";
-  color: @implicit-color;
+
+
+
+atom-text-editor .gutter .line-number.implicit .icon-right,
+atom-text-editor::shadow .gutter .line-number.implicit .icon-right {
+  visibility: visible;
+}
+atom-text-editor .gutter .line-number.implicit .icon-right:before,
+atom-text-editor::shadow .gutter .line-number.implicit .icon-right:before {
+  content: "\f087";
+  color: #09C;
+}
+
+implicit-info.select-list.popover-list {
+  z-index: 5;
+  width: auto;
+  display: inline-block;
+  padding: 0;
+  overflow: hidden;
+
+  ol.list-group {
+    margin: 0;
+  }
 }

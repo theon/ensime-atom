@@ -1,2 +1,8 @@
-'atom-workspace':
+'atom-text-editor':
   'f4': 'ensime:go-to-definition'
+
+'atom-text-editor.ensime-implicits-active':
+  'escape': 'ensime:cancel'
+
+'atom-text-editor':
+  'cmd-ctrl-i': 'ensime:show-implicits'
