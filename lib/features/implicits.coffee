@@ -19,7 +19,7 @@ class Implicits
       @saveListener = @editor.onDidSave(() => @showImplicits())
       @disposables.add @saveListener
     else
-      @saveListener.dispose()
+      @saveListener?.dispose()
       @disposables.remove @saveListener
 
 
