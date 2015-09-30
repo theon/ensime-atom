@@ -34,7 +34,8 @@ formatParamSections = (paramSections) ->
   "(" + sections.join(")(") + ")"
 
 
-
+functionMatcher = /scala\.Function\d{1,2}/
+scalaPackageMatcher = /scala\.([\s\S]*)/
 
 # For hover
 formatType = (theType) ->
@@ -42,15 +43,28 @@ formatType = (theType) ->
     formatParamSections(theType.paramSections) + ": " + formatType(theType.resultType)
   else if(theType.typehint == "BasicTypeInfo")
     typeArgs = theType.typeArgs
-    name = if theType.declAs.typehint in ['Class', 'Trait', 'Object', 'Interface'] then theType.fullName else theType.name
+
+    scalaPackage = scalaPackageMatcher.exec(theType.fullName)
+    name =
+      if(scalaPackage)
+        scalaPackage[1]
+      else
+        if theType.declAs.typehint in ['Class', 'Trait', 'Object', 'Interface'] then theType.fullName else theType.name
+
     if not typeArgs || typeArgs.length == 0
       name
     else
-      formattedTypeArgs = (formatType(typeArg) for typeArg in typeArgs).join(", ")
-      if name == 'scala.<byname>'
-        "=> " + formattedTypeArgs
+      formattedTypeArgs = (formatType(typeArg) for typeArg in typeArgs)
+      if theType.fullName == 'scala.<byname>'
+        "=> " + formattedTypeArgs.join(", ")
+      else if theType.fullName == "scala.Function1"
+        [i, o] = formattedTypeArgs
+        i + " => " + o
+      else if functionMatcher.test(theType.fullName)
+        [params..., result] = formattedTypeArgs
+        "(#{params.join(", ")}) => #{result}"
       else
-        name + "[#{formattedTypeArgs}]"
+        name + "[#{formattedTypeArgs.join(", ")}]"
 
 
 
