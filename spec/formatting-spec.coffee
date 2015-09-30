@@ -380,3 +380,42 @@ describe 'formatType', ->
     }
     result = formatImplicitInfo(input)
     expect(result).toBe("Implicit conversion: ToApplyOps")
+
+  it "should handle FunctionX with arrow notation", ->
+    input =
+          {
+            "name": "Function1",
+            "fullName": "scala.Function1",
+            "typehint": "BasicTypeInfo",
+            "typeId": 4464,
+            "typeArgs": [
+              {
+                "name": "Int",
+                "fullName": "scala.Int",
+                "typehint": "BasicTypeInfo",
+                "typeId": 14,
+                "typeArgs": [],
+                "members": [],
+                "declAs": {
+                  "typehint": "Class"
+                }
+              },
+              {
+                "name": "Double",
+                "fullName": "scala.Double",
+                "typehint": "BasicTypeInfo",
+                "typeId": 2600,
+                "typeArgs": [],
+                "members": [],
+                "declAs": {
+                  "typehint": "Class"
+                }
+              }
+            ],
+            "members": [],
+            "declAs": {
+              "typehint": "Trait"
+            }
+          }
+    result = formatType(input)
+    expect(result).toBe("Int => Double")
