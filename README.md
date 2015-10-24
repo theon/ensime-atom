@@ -31,6 +31,8 @@ Way early still and will most likely be very buggy. Or maybe not start at all. P
 - [ ] "explicify" applied implicits
 - [ ] Goto definition by simple typing prefix (like cmd-N in Idea or cmd-shift-T in Eclipse?)
 - [ ] Better errors and warnings with markings in gutter
+- [ ] Find all subclasses of the class under the cursor
+- [ ] Find all usages of the function under the cursor
 
 - [ ] _insert your suggestion_
 
