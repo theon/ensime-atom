@@ -1,5 +1,5 @@
 net = require('net')
-{log} = require './utils'
+{log, modalMsg} = require './utils'
 Swank = require './lisp/swank-protocol'
 _ = require 'lodash'
 
@@ -51,6 +51,8 @@ class Client
     )
 
     @socket.on('error', (data) ->
+      if (data.code == 'ECONNREFUSED')
+        modalMsg("Connection refused connecting to ensime, it is probably not running. Remove .ensime_cache/port and .ensime_cache/http and try again.")
       console.log("Ensime server error event: " + data)
     )
 
