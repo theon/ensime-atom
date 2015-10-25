@@ -20,7 +20,7 @@ Way early still and will most likely be very buggy. Or maybe not start at all. P
 - Need plugin to navigate back to last cursor position when "code surfing". Maybe https://atom.io/packages/last-cursor-position
 
 ## Features:
-- [x] Jump to definition (alt-click or f4)
+- [x] Jump to definition (cmd-click or f4)
 - [x] Hover for type info
 - [x] Errors and warnings (Cmnds for typecheck file, typecheck buffer, typecheck all). Also setting for typecheck current file on save or while typing.
 - [x] Basic autocompletion
