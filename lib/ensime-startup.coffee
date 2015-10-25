@@ -12,29 +12,34 @@ remote = require 'remote'
 createSbtClasspathBuild = (scalaVersion, ensimeServerVersion, classpathFile) ->
   """
   import sbt._
-
   import IO._
-
   import java.io._
 
   scalaVersion := \"#{scalaVersion}\"
 
+  ivyScala := ivyScala.value map { _.copy(overrideScalaVersion = true) }
+
+  // we don't need jcenter, so this speeds up resolution
+  fullResolvers -= Resolver.jcenterRepo
+
   // allows local builds of scala
   resolvers += Resolver.mavenLocal
 
-  ivyScala := ivyScala.value map { _.copy(overrideScalaVersion = true) }
+  // for java support
+  resolvers += \"NetBeans\" at \"http://bits.netbeans.org/nexus/content/groups/netbeans\"
 
+  // this is where the ensime-server snapshots are hosted
   resolvers += Resolver.sonatypeRepo(\"snapshots\")
 
-  resolvers += \"Typesafe repository\" at \"http://repo.typesafe.com/typesafe/releases/\"
-
-  resolvers += \"Akka Repo\" at \"http://repo.akka.io/repository\"
-
   libraryDependencies ++= Seq(
-    \"org.ensime\" %% \"ensime\" % \"#{ensimeServerVersion}\",
-    \"org.scala-lang\" % \"scala-compiler\" % scalaVersion.value force(),
-    \"org.scala-lang\" % \"scala-reflect\" % scalaVersion.value force(),
-    \"org.scala-lang\" % \"scalap\" % scalaVersion.value force()
+    \"org.ensime\" %% \"ensime\" % \"#{ensimeServerVersion}\"
+  )
+
+  dependencyOverrides ++= Set(
+    \"org.scala-lang\" % \"scala-compiler\" % scalaVersion.value,
+    \"org.scala-lang\" % \"scala-library\" % scalaVersion.value,
+    \"org.scala-lang\" % \"scala-reflect\" % scalaVersion.value,
+    \"org.scala-lang\" % \"scalap\" % scalaVersion.value
   )
 
   val saveClasspathTask = TaskKey[Unit](\"saveClasspath\", \"Save the classpath to a file\")
@@ -113,7 +118,7 @@ updateEnsimeServer = (sbtCmd, scalaVersion, ensimeServerVersion) ->
   fs.writeFileSync(tempdir + path.sep + 'build.sbt', createSbtClasspathBuild(scalaVersion, ensimeServerVersion,
     mkClasspathFileName(scalaVersion, ensimeServerVersion)))
 
-  fs.writeFileSync(tempdir + path.sep + 'project' + path.sep + 'build.properties', 'sbt.version=0.13.8\n')
+  fs.writeFileSync(tempdir + path.sep + 'project' + path.sep + 'build.properties', 'sbt.version=0.13.9\n')
 
   # run sbt "saveClasspath" "clean"
   pid = spawn("#{sbtCmd}", ['-Dsbt.log.noformat=true', 'saveClasspath', 'clean'], {cwd: tempdir})
