@@ -149,7 +149,7 @@ module.exports = Ensime =
   maybeStartEnsimeServer: ->
     if not @ensimeServerPid
       if fs.existsSync(portFile())
-        modalMsg(".ensime/cache/port file already exists. Sure no running server already? If so, remove file and try again.")
+        modalMsg(".ensime_cache/port file already exists. Sure no running server already? If so, remove file and try again.")
       else
         startEnsimeServer((pid) =>
           @ensimeServerPid = pid
