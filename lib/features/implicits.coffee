@@ -1,6 +1,6 @@
 ImplicitInfo = require '../model/implicit-info'
 SubAtom = require 'sub-atom'
-
+{log} = require '../utils'
 class Implicits
   constructor: (@editor, @client) ->
     # @gutter = @editor.gutterWithName "ensime-implicits"
@@ -24,7 +24,7 @@ class Implicits
 
 
   showImplicits: ->
-    console.log("showImplicits this: " + this)
+    log("showImplicits this: " + this)
     b = @editor.getBuffer()
     @client.typecheckBuffer(b, (typecheckResult) =>
       range = b.getRange()
@@ -40,7 +40,7 @@ class Implicits
 
       @clearMarkers()
       @client.post(msg, (result) =>
-        console.log(result)
+        log(result)
 
         createMarker = (info) =>
           range = [b.positionForCharacterIndex(parseInt(info.start)), b.positionForCharacterIndex(parseInt(info.end))]
@@ -68,7 +68,7 @@ class Implicits
 
   showImplicitsAtCursor: ->
     pos = @editor.getCursorBufferPosition()
-    console.log("pos: " + pos)
+    log("pos: " + pos)
     markers = @findMarkers({type: 'implicit', containsPoint: pos})
     infos = markers.map (marker) -> marker.properties.info
     implicitInfo = new ImplicitInfo(infos, @editor, pos)

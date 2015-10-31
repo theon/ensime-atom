@@ -43,5 +43,4 @@ describe 'sexpToJObject', ->
     """
 
     result = sexpToJObject(readFromString(input))
-    console.log(result)
     expect(result[":scala-notes"][":notes"].length).toBe(1)

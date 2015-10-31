@@ -3,7 +3,6 @@
 module.exports = class ImplicitInfo
   constructor: (@infos, @editor, pos) ->
     @active = false
-    console.log("infos: " + @infos)
 
     @emitter = new Emitter
     @subscriptions = new CompositeDisposable
@@ -11,11 +10,8 @@ module.exports = class ImplicitInfo
       'ensime:applyImplicit': @confirmSelection,
       'ensime:cancel': @cancel
 
-
     @overlayMarker = @editor.markBufferPosition(pos)
     overlayDecoration = @editor.decorateMarker(@overlayMarker, {type: 'overlay', item: this, position: 'head'})
-
-
 
   bindToMovementCommands: ->
     commandNamespace = 'core' # This was an option in autocomplete-plus

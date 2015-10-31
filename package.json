@@ -9,13 +9,14 @@
     "atom": ">0.50.0"
   },
   "dependencies": {
-    "emissary": "1.x",
-    "atom-space-pen-views": "^2.0.3",
-    "jquery": "^2",
     "atom-message-panel": "~1.2.4",
+    "atom-package-dependencies": "latest",
+    "atom-space-pen-views": "^2.1.0",
+    "emissary": "1.x",
+    "jquery": "^2",
     "lodash": "~3.9.3",
     "sub-atom": "~1.0.0",
-    "atom-package-dependencies": "latest"
+    "vue": "^1.0.0-csp"
   },
   "package-dependencies": {
     "hyperclick": "whatever"
