@@ -11,7 +11,7 @@ class Client
     @callbackMap = {}
 
     @parser = new Swank.SwankParser( (env) =>
-      console.log("incoming: #{env}")
+      log("incoming: #{env}")
       json = JSON.parse(env)
       callId = json.callId
       # If RpcResponse - lookup in map, otherwise use some general function for handling general msgs
@@ -20,7 +20,7 @@ class Client
         try
           @callbackMap[callId](json.payload)
         catch error
-          console.log("error in callback: #{error}")
+          log("error in callback: #{error}")
         finally
           delete @callbackMap[callId]
 
@@ -81,22 +81,24 @@ class Client
       file: file
       point: offset
 
-    @post(req, (msg) ->
+    @post(req, (msg) =>
       pos = msg.declPos
       # Sometimes no pos
       if(pos)
-        targetFile = pos.file
-        targetOffset = pos.offset
-        #console.log("targetFile: #{targetFile}")
-        atom.workspace.open(targetFile).then (editor) ->
-          targetEditorPos = editor.getBuffer().positionForCharacterIndex(parseInt(targetOffset))
-          editor.setCursorScreenPosition(targetEditorPos)
+        @goToPosition(pos)
       else
         log("No declPos in response from Ensime, cannot go anywhere")
     )
 
 
-
+  goToPosition: (pos) ->
+    if(pos.typehint == "LineSourcePosition")
+      atom.workspace.open(pos.file).then (editor) ->
+        editor.setCursorBufferPosition([parseInt(pos.line), 0])
+    else
+      atom.workspace.open(pos.file).then (editor) ->
+        targetEditorPos = editor.getBuffer().positionForCharacterIndex(parseInt(pos.offset))
+        editor.setCursorBufferPosition(targetEditorPos)
 
 
   typecheckBuffer: (b, callback = () ->) =>
@@ -172,7 +174,7 @@ class Client
       maxResults: 5
 
     @post(msg, (result) ->
-      console.log(result)
+      log(result)
     )
 
 

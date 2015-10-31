@@ -26,11 +26,11 @@ Way early still and will most likely be very buggy. Or maybe not start at all. P
 - [x] Basic autocompletion
 - [x] Format source file
 - [x] mark applied implicits (conversions and params)
+- [x] show applied implicits
+- [ ] Goto type by simple typing prefix (like cmd-N in Idea or cmd-shift-T in Eclipse?)
 - [ ] Import type at point
-- [ ] show applied implicits
-- [ ] "explicify" applied implicits
-- [ ] Goto definition by simple typing prefix (like cmd-N in Idea or cmd-shift-T in Eclipse?)
 - [ ] Better errors and warnings with markings in gutter
+- [ ] "explicify" applied implicits
 - [ ] Find all subclasses of the class under the cursor
 - [ ] Find all usages of the function under the cursor
 
@@ -73,6 +73,8 @@ https://gitter.im/ensime/ensime-atom
 - [x] See if we can use code-links for mouse clicks https://atom.io/packages/code-links (Not gonna do it)
 - [x] Check if we can get rid of terminal escape stuff from log. Look at term2 or ask.
 - [x] getPath is deprecated: https://github.com/atom/atom/blob/master/src/project.coffee#L471 Maybe need to ask about where .ensime is like Emacs.
+- [ ] Use path.dirname(module.filename) instead of package name lookup? https://github.com/paulpflug/vue-hello-world/blob/master/lib/vue-hello-world.coffee#L31
+- [ ] Use .vue https://github.com/vuejs/vueify#compiler-api
 - [ ] If error with "not found" -> alt-enter for quick import just like idea
 - [ ] Check out https://github.com/OmniSharp/omnisharp-atom Seems we can learn a lot!
 - [ ] Create FRP stream for editors that features can use.

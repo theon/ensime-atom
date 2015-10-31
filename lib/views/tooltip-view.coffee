@@ -16,7 +16,6 @@ class TooltipView extends View
   # update tooltip text
   updateText: (text) ->
     @inner.text(text)
-    #console.log("TooltipView updateText: #{text}")
     @updatePosition()
     @fadeTo(0,1)
 

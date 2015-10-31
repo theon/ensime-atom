@@ -26,9 +26,14 @@ class AutocompletePlusProvider
           typeSig = c.typeSig
           if(c.isCallable)
             formattedSignature = formatCompletionsSignature(typeSig.sections)
-            {leftLabel: c.typeSig.result, snippet: "#{c.name}#{formattedSignature}"}
+            {
+              leftLabel: c.typeSig.result
+              snippet: "#{c.name}#{formattedSignature}"
+            }
           else
-            {snippet: c.name}
+            {
+              snippet: c.name
+            }
 
         autocompletions = (translate c for c in completions)
         ### Autocomplete + :

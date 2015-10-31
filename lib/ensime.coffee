@@ -71,17 +71,11 @@ module.exports = Ensime =
       type: 'boolean'
       default: true
       order: 7
-    modifierKeyForJumpToDefinition:
-      description: "Modifier key used when clicking for jump to definition"
-      type: 'string'
-      enum: ['cmd', 'alt', 'ctrl']
-      default: 'cmd'
-      order: 8
     markImplicitsAutomatically:
       description: "Mark implicits on buffer load and save"
       type: 'boolean'
       default: true
-      order: 9
+      order: 8
 
 
   addCommandsForStoppedState: ->
@@ -116,6 +110,8 @@ module.exports = Ensime =
     @startedCommands.add atom.commands.add scalaSourceSelector, "ensime:format-source", => @formatCurrentSourceFile()
     @startedCommands.add atom.commands.add scalaSourceSelector, "ensime:get-import-suggestions", => @getImportSuggestions()
 
+
+    @startedCommands.add atom.commands.add 'atom-workspace', "ensime:search-public-symbol", => @searchPublicSymbol()
 
   activate: (state) ->
     # Install deps if not there
@@ -369,3 +365,9 @@ module.exports = Ensime =
 
   getImportSuggestions: ->
     @client.getImportSuggestions([atom.workspace.getActiveTextEditor().getWordUnderCursor()])
+
+  searchPublicSymbol: ->
+    unless @publicSymbolSearch
+      PublicSymbolSearch = require('./views/public-symbol-search-vue')
+      @publicSymbolSearch = new PublicSymbolSearch(@client)
+    @publicSymbolSearch.toggle()

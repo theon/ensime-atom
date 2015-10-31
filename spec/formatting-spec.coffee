@@ -16,7 +16,6 @@ describe 'formatCompletionsSignature', ->
         """
     json = JSON.parse(inputString)
     result = formatCompletionsSignature(json.typeSig.sections)
-    console.log(result)
     expect(result).toBe("(${1:asdf: Int}, ${2:y: Int})")
 
   it "should format curried", ->
@@ -37,7 +36,6 @@ describe 'formatCompletionsSignature', ->
         ]
 
     result = formatCompletionsSignature(sections)
-    console.log result
     expect(result).toBe("(${1:x: Int})(${2:y: Int})")
 
 
