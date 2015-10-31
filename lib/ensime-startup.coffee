@@ -48,7 +48,7 @@ createSbtClasspathBuild = (scalaVersion, ensimeServerVersion, classpathFile) ->
     val managed = (managedClasspath in Runtime).value.map(_.data.getAbsolutePath)
     val unmanaged = (unmanagedClasspath in Runtime).value.map(_.data.getAbsolutePath)
     val out = file(\"""#{classpathFile}\""")
-    write(out, (unmanaged ++ managed).mkString(File.pathSeparator))
+    IO.write(out, (unmanaged ++ managed).mkString(File.pathSeparator))
   }
   """
 
