@@ -40,7 +40,7 @@ class TypeChecking
           message: note.msg
           className: switch note.severity.typehint
             when "NoteError" then "highlight-error"
-            when "NoteWarning" then "highlight-warning"
+            when "NoteWarn" then "highlight-warning"
             else ""
 
     for file, notes of @notesByFile
