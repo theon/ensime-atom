@@ -34,7 +34,13 @@ module.exports = class PublicSymbolSearch
 
       'core:confirm': (event) =>
         selected = @vue.getSelected()
-        @client.goToPosition(selected.pos)
+        if(selected.pos)
+          @client.goToPosition(selected.pos)
+        else
+          atom.notifications.addError("Got no position from Ensime server :(", {
+            dismissable: true
+            detail: "There was no .pos property of the the symbol from Ensime server. Maybe no source attached? Check .ensime!"
+            })
         @toggle()
         event.stopPropagation()
 
