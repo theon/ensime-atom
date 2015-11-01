@@ -368,6 +368,6 @@ module.exports = Ensime =
 
   searchPublicSymbol: ->
     unless @publicSymbolSearch
-      PublicSymbolSearch = require('./views/public-symbol-search-vue')
+      PublicSymbolSearch = require('./features/public-symbol-search')
       @publicSymbolSearch = new PublicSymbolSearch(@client)
     @publicSymbolSearch.toggle()

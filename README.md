@@ -27,7 +27,7 @@ Way early still and will most likely be very buggy. Or maybe not start at all. P
 - [x] Format source file
 - [x] mark applied implicits (conversions and params)
 - [x] show applied implicits
-- [ ] Goto type by simple typing prefix (like cmd-N in Idea or cmd-shift-T in Eclipse?)
+- [x] Goto type by simple typing prefix (like cmd-N in Idea or cmd-shift-T in Eclipse?)
 - [ ] Import type at point
 - [ ] Better errors and warnings with markings in gutter
 - [ ] "explicify" applied implicits
