@@ -9,15 +9,15 @@ StatusbarView = require './views/statusbar-view'
 {updateEnsimeServer, startEnsimeServer, classpathFileName} = require './ensime-startup'
 
 ShowTypes = require './features/show-types'
-Implicits = require('./features/implicits')
-AutoTypecheck = require('./features/auto-typecheck')
+Implicits = require './features/implicits'
+AutoTypecheck = require './features/auto-typecheck'
 
-TypeCheckingFeature = require('./features/typechecking')
-AutocompletePlusProvider = require('./features/autocomplete-plus')
+TypeCheckingFeature = require './features/typechecking'
+AutocompletePlusProvider = require './features/autocomplete-plus'
 {log, modalMsg, isScalaSource, projectPath} = require './utils'
 
-ImplicitInfo = require('./model/implicit-info')
-ImplicitInfoView = require('./views/implicit-info-view')
+ImplicitInfo = require './model/implicit-info'
+ImplicitInfoView = require './views/implicit-info-view'
 
 portFile = ->
     loadSettings = atom.getLoadSettings()
@@ -108,10 +108,11 @@ module.exports = Ensime =
     @startedCommands.add atom.commands.add 'atom-workspace', "ensime:update-ensime-server", => updateEnsimeServer()
 
     @startedCommands.add atom.commands.add scalaSourceSelector, "ensime:format-source", => @formatCurrentSourceFile()
-    @startedCommands.add atom.commands.add scalaSourceSelector, "ensime:get-import-suggestions", => @getImportSuggestions()
 
 
     @startedCommands.add atom.commands.add 'atom-workspace', "ensime:search-public-symbol", => @searchPublicSymbol()
+    @startedCommands.add atom.commands.add 'atom-workspace', "ensime:import-suggestion", => @getImportSuggestions()
+    @startedCommands.add atom.commands.add 'atom-workspace', "ensime:organize-imports", => @organizeImports()
 
   activate: (state) ->
     # Install deps if not there
@@ -363,11 +364,26 @@ module.exports = Ensime =
       editor.setCursorBufferPosition(cursorPos)
     )
 
-  getImportSuggestions: ->
-    @client.getImportSuggestions([atom.workspace.getActiveTextEditor().getWordUnderCursor()])
-
   searchPublicSymbol: ->
     unless @publicSymbolSearch
       PublicSymbolSearch = require('./features/public-symbol-search')
       @publicSymbolSearch = new PublicSymbolSearch(@client)
     @publicSymbolSearch.toggle()
+
+  getImportSuggestions: ->
+    unless @importSuggestions
+      ImportSuggestions = require('./features/import-suggestions')
+      @importSuggestions = new ImportSuggestions(@client)
+    editor = atom.workspace.getActiveTextEditor()
+    @importSuggestions.getImportSuggestions(
+      editor.getBuffer(),
+      editor.getBuffer().characterIndexForPosition(editor.getCursorBufferPosition()),
+      editor.getWordUnderCursor()
+    )
+
+  organizeImports: ->
+    unless @refactorings
+      Refactorings = require './features/refactorings'
+      @refactorings = new Refactorings(@client)
+    editor = atom.workspace.getActiveTextEditor()
+    @refactorings.organizeImports(editor.getPath())

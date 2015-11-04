@@ -16,10 +16,11 @@
     "jquery": "^2",
     "lodash": "~3.9.3",
     "sub-atom": "~1.0.0",
-    "vue": "1.0.0-csp"
+    "vue": "csp"
   },
   "package-dependencies": {
-    "hyperclick": "whatever"
+    "hyperclick": "whatever",
+    "language-scala": "whatever"
   },
   "providedServices": {
     "autocomplete.provider": {
