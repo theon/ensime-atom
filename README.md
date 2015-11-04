@@ -15,7 +15,12 @@ Way early still and will most likely be very buggy. Or maybe not start at all. P
 - cmd-shift-P Ensime: Start.
 - Then you can use the features marked x below :)
 
-## Complementing packages:
+## Complementing packages
+### Automatically installed:
+- [language-scala](https://atom.io/packages/language-scala) for syntax highlighting.
+- [hyperclick](https://atom.io/packages/hyperclick) for code navigation. Ensime hooks in as provider.
+
+### Recomended:
 - [Project manager](https://github.com/danielbrodin/atom-project-manager) is really handy to keep track of projects.
 - Need plugin to navigate back to last cursor position when "code surfing". Maybe https://atom.io/packages/last-cursor-position
 
@@ -28,6 +33,7 @@ Way early still and will most likely be very buggy. Or maybe not start at all. P
 - [x] mark applied implicits (conversions and params)
 - [x] show applied implicits
 - [x] Goto type by simple typing prefix (like cmd-N in Idea or cmd-shift-T in Eclipse?)
+- [x] Organize imports
 - [ ] Import type at point
 - [ ] Better errors and warnings with markings in gutter
 - [ ] "explicify" applied implicits

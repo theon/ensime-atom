@@ -160,22 +160,9 @@ class Client
         makers = markers sym for sym in syms
         codeLinks = makeCodeLink marker for maker in makers
 
-
-
         resolve(codeLinks)
       )
 
-  getImportSuggestions: (words)->
-    msg =
-      typehint: 'ImportSuggestionsReq'
-      file: '' # not used
-      point: 0 # not used
-      names: words
-      maxResults: 5
-
-    @post(msg, (result) ->
-      log(result)
-    )
 
 
 symbols = ["ObjectSymbol"
