@@ -15,13 +15,9 @@ module.exports = class PublicSymbolSearch
         maxResults: 10
 
       @client.post(req, (msg) =>
-          console.log(msg)
           @vue.results = msg.syms
+          @vue.selected = 0
         )
-
-  #  @filterEditorView.on 'blur', (e) =>
-  #     @cancel() unless @cancelling
-
 
     atom.commands.add @vue.$el,
       'core:move-up': (event) =>
@@ -34,15 +30,19 @@ module.exports = class PublicSymbolSearch
 
       'core:confirm': (event) =>
         selected = @vue.getSelected()
-        if(selected.pos)
-          @client.goToPosition(selected.pos)
+        if(selected)
+          if(selected.pos)
+            @client.goToPosition(selected.pos)
+          else
+            atom.notifications.addError("Got no position from Ensime server :(", {
+              dismissable: true
+              detail: "There was no .pos property of the the symbol from Ensime server. Maybe no source attached? Check .ensime!"
+              })
+          @toggle()
+          event.stopPropagation()
         else
-          atom.notifications.addError("Got no position from Ensime server :(", {
-            dismissable: true
-            detail: "There was no .pos property of the the symbol from Ensime server. Maybe no source attached? Check .ensime!"
-            })
-        @toggle()
-        event.stopPropagation()
+          # Do nothing
+
 
       'core:cancel': (event) =>
         @cancel()
