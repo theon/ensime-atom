@@ -228,7 +228,7 @@ module.exports = Ensime =
     # Client
     tryStartup = (trysLeft) =>
       if(trysLeft == 0)
-        modalMsg("Server doesn't seem to startup in time. Report bug!")
+        modalMsg("Server doesn't seem to startup in time. Check .ensime_cache/server.log, run 'Update Ensime Server' and/or report this as a bug!")
       else if fs.existsSync(portFile())
         initClient()
       else
