@@ -1,6 +1,9 @@
 SymbolSearchVue = require('../views/public-symbol-search-vue')
 
+maxSymbols = 5
+
 module.exports = class PublicSymbolSearch
+
   constructor: (@client) ->
     @vue = new SymbolSearchVue
     @element = document.createElement('div')
@@ -12,7 +15,7 @@ module.exports = class PublicSymbolSearch
       req =
         typehint: "PublicSymbolSearchReq"
         keywords: newText.split(' ')
-        maxResults: 10
+        maxResults: maxSymbols
 
       @client.post(req, (msg) =>
           @vue.results = msg.syms
@@ -21,11 +24,13 @@ module.exports = class PublicSymbolSearch
 
     atom.commands.add @vue.$el,
       'core:move-up': (event) =>
-        @vue.selected -= 1
+        if(@vue.selected > 0)
+          @vue.selected -= 1
         event.stopPropagation()
 
       'core:move-down': (event) =>
-        @vue.selected += 1
+        if(@vue.selected < maxSymbols - 1)
+          @vue.selected += 1
         event.stopPropagation()
 
       'core:confirm': (event) =>
