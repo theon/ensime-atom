@@ -5,3 +5,4 @@ ensime_port
 ensime_update_
 classpath_*
 **/target
+.vscode
