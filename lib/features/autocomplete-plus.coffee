@@ -1,8 +1,16 @@
 {formatCompletionsSignature} = require '../formatting'
+SubAtom = require 'sub-atom'
 
 module.exports =
 class AutocompletePlusProvider
+
   constructor: (@client) ->
+    @disposables = new SubAtom
+    @disposables.add atom.config.observe 'Ensime.noOfAutocompleteSuggestions', (value) =>
+      @noOfAutocompleteSuggestions = value
+
+  dispose: ->
+    @disposables.dispose()
 
   getCompletions: (textBuffer, bufferPosition, callback) =>
     file = textBuffer.getPath()
@@ -14,7 +22,7 @@ class AutocompletePlusProvider
         file: file
         contents: textBuffer.getText()
       point: offset
-      maxResults: 5
+      maxResults: @noOfAutocompleteSuggestions
       caseSens: false
       reload: true
 

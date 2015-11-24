@@ -76,6 +76,12 @@ module.exports = Ensime =
       type: 'boolean'
       default: true
       order: 8
+    noOfAutocompleteSuggestions:
+      description: "Number of autocomplete suggestions requested of server"
+      type: 'integer'
+      default: 5
+      order: 9
+
 
 
   addCommandsForStoppedState: ->
@@ -281,6 +287,7 @@ module.exports = Ensime =
     @subscriptions.dispose()
     @controlSubscription.dispose()
 
+    @autocompletePlusProvider.dispose()
     @autocompletePlusProvider = null
 
 
