@@ -350,6 +350,7 @@ module.exports = Ensime =
 
   provideHyperclick: ->
     {
+      providerName: 'ensime-atom'
       getSuggestionForWord: (textEditor, text, range) =>
         {
           range: range
