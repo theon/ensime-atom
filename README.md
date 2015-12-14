@@ -7,7 +7,8 @@ Way early still and will most likely be very buggy. Or maybe not start at all. P
 
 ## Prerequisites
 - sbt (used to bootstrap server)
-- [.ensime file. generate with sbt gen-ensime](https://github.com/ensime/ensime-emacs/wiki/Quick-Start-Guide#installing-the-ensime-sbt-plugin)
+- [.ensime file. generate with sbt gen-ensime](https://github.com/ensime/ensime-sbt#install)
+- Install the ensime-atom plugin by searching on the Atom Preferences > Install screen
 
 ## Getting started
 - Open a project with a .ensime in root
